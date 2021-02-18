@@ -1,0 +1,91 @@
+#!/usr/bin/perl -W 
+
+#system  "ls  kmtc*.fits | sort > o.list";
+@olist = `cat o.list | sort`;
+
+   open(my $fh, '>', 'mkfour.cl');
+   for ($i=0; $i< $#olist+1; $i++){
+      my ($data1, $data2, $refn, @tmpstr) = split(/\./, $olist[$i]);
+      print $refn;
+         $oname = $olist[$i];
+         chomp $oname;
+
+   	    for ($k=1; $k< 5; $k++){
+		if($k>0 && $k<2){
+                  open(my $fo, '>', 'o.mm');
+                    for($j=1;$j<9;$j++){
+		      printf $fo "%s[im%d][1:1152,1:9232]\n",$oname, $j;
+                    }
+                  close $fo
+		}	
+		if($k>1 && $k<3){
+                  open(my $fo, '>', 'o.kk');
+                    for($j=9;$j<17;$j++){
+		      printf $fo "%s[im%d][1:1152,1:9232]\n",$oname, $j;
+                    }
+                  close $fo
+		}
+		if($k>2 && $k<4){
+                  open(my $fo, '>', 'o.nn');
+                    for($j=17;$j<25;$j++){
+		      printf $fo "%s[im%d][1:1152,1:9232]\n",$oname, $j;
+                    }
+                  close $fo
+		}
+		if($k>3 && $k<5){
+                  open(my $fo, '>', 'o.tt');
+                    for($j=25;$j<33;$j++){
+		      printf $fo "%s[im%d][1:1152,1:9232]\n",$oname, $j;
+                    }
+                  close $fo
+		}
+            }
+	printf $fh "unlearn imtile\n";
+	printf $fh "imtile input=\@o.mm output=%s.mm trim_section=\"\" nctile=8 nltile=1 ncoverlap=0 nloverlap=0 opixtype=r\n", $refn;
+	printf $fh "imtile input=\@o.kk output=%s.kk trim_section=\"\" nctile=8 nltile=1 ncoverlap=0 nloverlap=0 opixtype=r\n", $refn;
+	printf $fh "imtile input=\@o.nn output=%s.nn trim_section=\"\" nctile=8 nltile=1 ncoverlap=0 nloverlap=0 opixtype=r\n", $refn;
+	printf $fh "imtile input=\@o.tt output=%s.tt trim_section=\"\" nctile=8 nltile=1 ncoverlap=0 nloverlap=0 opixtype=r\n", $refn;
+
+	printf $fh "imgets(\"%s[1]\",\"dec\")\n",$oname;
+	printf $fh "hedit(\"%s.mm\",\"dec\",real(imgets.value)+0.5,add+,ver-)\n",$refn;
+	printf $fh "imgets(\"%s[1]\",\"ra\")\n",$oname;
+	printf $fh "hedit(\"%s.mm\",\"ra\",real(imgets.value)+0.03333,add+,ver-)\n",$refn;
+
+
+	printf $fh "imgets(\"%s[1]\",\"dec\")\n",$oname;
+	printf $fh "hedit(\"%s.kk\",\"dec\",real(imgets.value)+0.5,add+,ver-)\n",$refn;
+	printf $fh "imgets(\"%s[1]\",\"ra\")\n",$oname;
+	printf $fh "hedit(\"%s.kk\",\"ra\",real(imgets.value)-0.03333,add+,ver-)\n",$refn;
+
+
+	printf $fh "imgets(\"%s[1]\",\"dec\")\n",$oname;
+	printf $fh "hedit(\"%s.nn\",\"dec\",real(imgets.value)-0.5,add+,ver-)\n",$refn;
+	printf $fh "imgets(\"%s[1]\",\"ra\")\n",$oname;
+	printf $fh "hedit(\"%s.nn\",\"ra\",real(imgets.value)+0.03333,add+,ver-)\n",$refn;
+
+
+	printf $fh "imgets(\"%s[1]\",\"dec\")\n",$oname;
+	printf $fh "hedit(\"%s.tt\",\"dec\",real(imgets.value)-0.5,add+,ver-)\n",$refn;
+	printf $fh "imgets(\"%s[1]\",\"ra\")\n",$oname;
+	printf $fh "hedit(\"%s.tt\",\"ra\",real(imgets.value)-0.03333,add+,ver-)\n",$refn;
+
+        printf $fh "hedit %s*.fits crpix1 4600 add+ ver-\n",$refn;
+        printf $fh "hedit %s*.fits crpix2 4600 add+ ver-\n",$refn;
+        printf $fh "hedit %s*.fits cd1_1 -0.00011 add+ ver-\n",$refn;
+        printf $fh "hedit %s*.fits cd2_2 0.00011 add+ ver-\n",$refn;
+        printf $fh "hedit %s*.fits radecsys icrs add+ ver-\n",$refn;
+        printf $fh "hedit %s*.fits equinox 2000.0 add+ ver-\n",$refn;
+        printf $fh "hedit %s*.fits wcsdim 2 add+ ver-\n",$refn;
+
+        printf $fh "mscred\n";
+        printf $fh "unlearn mscsetwcs\n";
+        printf $fh "mscsetwcs %s.mm database=mmm.coeff ra=ra dec=dec\n",$refn;
+        printf $fh "mscsetwcs %s.kk database=kkk.coeff ra=ra dec=dec\n",$refn;
+        printf $fh "mscsetwcs %s.nn database=nnn.coeff ra=ra dec=dec\n",$refn;
+        printf $fh "mscsetwcs %s.tt database=ttt.coeff ra=ra dec=dec\n",$refn;
+ 
+	printf $fh "lo\n";
+   }
+   close $fh;
+
+#system "cl < mkfour.cl";

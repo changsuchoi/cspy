@@ -1,0 +1,133 @@
+ls kmtc*.fits > o.list
+perl mkfour
+cl < mkfour.cl # iraf
+
+
+'''
+unlearn imtile
+imtile input=@o.mm output=006100.mm trim_section="" nctile=8 nltile=1 ncoverlap=0 nloverlap=0 opixtype=r
+imtile input=@o.kk output=006100.kk trim_section="" nctile=8 nltile=1 ncoverlap=0 nloverlap=0 opixtype=r
+imtile input=@o.nn output=006100.nn trim_section="" nctile=8 nltile=1 ncoverlap=0 nloverlap=0 opixtype=r
+imtile input=@o.tt output=006100.tt trim_section="" nctile=8 nltile=1 ncoverlap=0 nloverlap=0 opixtype=r
+imgets("kmtc.20150221.006100.fits[1]","dec")
+hedit("006100.mm","dec",real(imgets.value)+0.5,add+,ver-)
+imgets("kmtc.20150221.006100.fits[1]","ra")
+hedit("006100.mm","ra",real(imgets.value)+0.03333,add+,ver-)
+imgets("kmtc.20150221.006100.fits[1]","dec")
+hedit("006100.kk","dec",real(imgets.value)+0.5,add+,ver-)
+imgets("kmtc.20150221.006100.fits[1]","ra")
+hedit("006100.kk","ra",real(imgets.value)-0.03333,add+,ver-)
+imgets("kmtc.20150221.006100.fits[1]","dec")
+hedit("006100.nn","dec",real(imgets.value)-0.5,add+,ver-)
+imgets("kmtc.20150221.006100.fits[1]","ra")
+hedit("006100.nn","ra",real(imgets.value)+0.03333,add+,ver-)
+imgets("kmtc.20150221.006100.fits[1]","dec")
+hedit("006100.tt","dec",real(imgets.value)-0.5,add+,ver-)
+imgets("kmtc.20150221.006100.fits[1]","ra")
+hedit("006100.tt","ra",real(imgets.value)-0.03333,add+,ver-)
+hedit 006100*.fits crpix1 4600 add+ ver-
+hedit 006100*.fits crpix2 4600 add+ ver-
+hedit 006100*.fits cd1_1 -0.00011 add+ ver-
+hedit 006100*.fits cd2_2 0.00011 add+ ver-
+hedit 006100*.fits radecsys icrs add+ ver-
+hedit 006100*.fits equinox 2000.0 add+ ver-
+hedit 006100*.fits wcsdim 2 add+ ver-
+mscred
+unlearn mscsetwcs
+mscsetwcs 006100.mm database=mmm.coeff ra=ra dec=dec
+mscsetwcs 006100.kk database=kkk.coeff ra=ra dec=dec
+mscsetwcs 006100.nn database=nnn.coeff ra=ra dec=dec
+mscsetwcs 006100.tt database=ttt.coeff ra=ra dec=dec
+'''
+
+
+
+'''
+# o.tt
+kmtc.20150221.006102.fits[im25][1:1152,1:9232]
+kmtc.20150221.006102.fits[im26][1:1152,1:9232]
+kmtc.20150221.006102.fits[im27][1:1152,1:9232]
+kmtc.20150221.006102.fits[im28][1:1152,1:9232]
+kmtc.20150221.006102.fits[im29][1:1152,1:9232]
+kmtc.20150221.006102.fits[im30][1:1152,1:9232]
+kmtc.20150221.006102.fits[im31][1:1152,1:9232]
+kmtc.20150221.006102.fits[im32][1:1152,1:9232]
+
+# o.nn
+kmtc.20150221.006102.fits[im17][1:1152,1:9232]
+kmtc.20150221.006102.fits[im18][1:1152,1:9232]
+kmtc.20150221.006102.fits[im19][1:1152,1:9232]
+kmtc.20150221.006102.fits[im20][1:1152,1:9232]
+kmtc.20150221.006102.fits[im21][1:1152,1:9232]
+kmtc.20150221.006102.fits[im22][1:1152,1:9232]
+kmtc.20150221.006102.fits[im23][1:1152,1:9232]
+kmtc.20150221.006102.fits[im24][1:1152,1:9232]
+
+# o.kk
+kmtc.20150221.006102.fits[im9][1:1152,1:9232]
+kmtc.20150221.006102.fits[im10][1:1152,1:9232]
+kmtc.20150221.006102.fits[im11][1:1152,1:9232]
+kmtc.20150221.006102.fits[im12][1:1152,1:9232]
+kmtc.20150221.006102.fits[im13][1:1152,1:9232]
+kmtc.20150221.006102.fits[im14][1:1152,1:9232]
+kmtc.20150221.006102.fits[im15][1:1152,1:9232]
+kmtc.20150221.006102.fits[im16][1:1152,1:9232]
+
+# o.mm
+kmtc.20150221.006102.fits[im1][1:1152,1:9232]
+kmtc.20150221.006102.fits[im2][1:1152,1:9232]
+kmtc.20150221.006102.fits[im3][1:1152,1:9232]
+kmtc.20150221.006102.fits[im4][1:1152,1:9232]
+kmtc.20150221.006102.fits[im5][1:1152,1:9232]
+kmtc.20150221.006102.fits[im6][1:1152,1:9232]
+kmtc.20150221.006102.fits[im7][1:1152,1:9232]
+kmtc.20150221.006102.fits[im8][1:1152,1:9232]
+'''
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# python 
+python kmtn_makemef.py 006101
+python kmtn_resetcrval.py 006101.fits -c 150.1176250,2.2050833
+
+# sextractor
+sex 006101.fits -c  kmtnet.sex \
+     -CATALOG_NAME    006101.cat \
+     -HEADER_SUFFIX   NONE \
+     -DETECT_THRESH   50.0 \
+     -ANALYSIS_THRESH 50.0 \
+     -SATUR_LEVEL     60000.0     \
+     -WEIGHT_TYPE     MAP_WEIGHT  \
+     -WEIGHT_IMAGE    weight.fits
+# scamp
+scamp 006101.cat -c  kmtnet.scamp   \
+        -ASTREF_CATALOG    2MASS    \
+        -POSITION_MAXERR   20.0       \
+        -CROSSID_RADIUS    5.0        \
+        -DISTORT_DEGREES   3          \
+        -PROJECTION_TYPE   TPV        \
+        -AHEADER_GLOBAL    kmtnet_global_ctio.ahead \
+        -CHECKPLOT_TYPE    ASTR_REFSYSMAP,FGROUPS,DISTORTION,ASTR_REFERROR2D,ASTR_REFERROR1D \
+        -CHECKPLOT_NAME    astr_refsysmap,fgroups,distort,astr_referror2d,astr_referror1d \
+        -STABILITY_TYPE    INSTRUMENT \
+
+# header integration
+
+from astropy.io import fits
+
+hdr=fits.getheader('kmct.20150221.006101.fits')
+data=fits.getdata('006101.fits')
+hdr.fromTxtFile('006101.head')
+fits.writeto('new006101.fits',data,hdr,clobber=True)
+
