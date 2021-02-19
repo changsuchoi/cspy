@@ -34,8 +34,6 @@ def calibfitslist(caliblist):
 
 
 if __name__=="__main__": 
-
-
     caliblist=glob.glob("Calib*.fits")
     oklist, nolist=calibfitslist(caliblist)
 
