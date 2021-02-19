@@ -6,16 +6,16 @@ def calibfitslist(caliblist):
     currentdir=os.getcwd()
     currentdir_split=currentdir.split('/')
     for i, j in enumerate(caliblist):
-        
-    
-        # sample='Calib-DOAO-NGC3367-20180330-111526-B-60.fits'    
+
+
+        # sample='Calib-DOAO-NGC3367-20180330-111526-B-60.fits'
         # print(i,j)
         filename = j.split('.')
         components=j.split('.')[0].split('-')
-        if len(components) !=7 : 
+        if len(components) !=7 :
             print (i,j)
             nolist.append(j)
-        if  components[0] != 'Calib' : 
+        if  components[0] != 'Calib' :
             os.system('rename Calibrated Calib '+j)
             print (i,j,'rename filename Calib-')
             nolist.append(j)
@@ -28,15 +28,15 @@ def calibfitslist(caliblist):
         if len(components[3]) != 8 or  components[3][:2] !='20' :
             print(i,j,'Date value is strange')
             nolist.append(j)        
-        if len(components[4]) != 6 : 
-            print(i,j,'Time value is strange')  
+        if len(components[4]) != 6 :
+            print(i,j,'Time value is strange')
             nolist.append(j)
-        else: oklist.append(j)  
-    return oklist, nolist    
+        else: oklist.append(j)
+    return oklist, nolist
 
 
 caliblist=glob.glob("Calib*.fits")
 oklist, nolist=calibfitslist(caliblist)
-
-
-    
+oklist.sort()
+nolist.sort()
+print ('oklist', len(oklist),'nolist', len(nolist))

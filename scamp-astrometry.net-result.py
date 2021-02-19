@@ -26,9 +26,9 @@ scampconfig = codedirec+'astrom.scamp'
 
 # os.system('ls *.fits')
 #imlist		= glob.glob(input('image to process\t: '))
-imlist		= glob.glob('Calib*.fits')
-imlist.sort()
-for img in imlist: print(img)
+#imlist		= glob.glob('Calib*.fits')
+#imlist.sort()
+#for img in imlist: print(img)
 
 
 def oswalkfunc():
@@ -53,6 +53,7 @@ def oswalknamesep(i):
 
 def scamp_net(i):
 	newname='sa'+i
+	print('='*60, '\n')
 	os.system('cp '+i+' '+newname)
 	iname = i.split('.')[0]
 	# source extractor
@@ -86,7 +87,7 @@ def scamp_net(i):
 
 	scampcom='scamp -c '+scampconfig+' '+iname+'.ldac'+' -ASTREF_CATLOG 2MASS'
 	scampcom='scamp -c '+scampconfig+' '+iname+'.ldac'+' -ASTREF_CATLOG GAIA-DR2 -SAVE_REFCATALOG Y'
-	scampcom='scamp -c '+scampconfig+' '+iname+'.ldac'+' -ASTREF_CATLOG GAIA-DR2'+ opt9 # TPV projection
+	scampcom='scamp -c '+scampconfig+' '+iname+'.ldac'+' -ASTREF_CATLOG GAIA-DR3'+ opt9 # TPV projection
 
 
 	scampout=subprocess.getoutput(scampcom)
@@ -94,11 +95,12 @@ def scamp_net(i):
 	contnum = scampout.split(line1[0])[1].split('\n')[1].split(' ')[11]
 	contnum = scampout.split(line1[0])[1].split('\n')[1].split('"')[1].split(' ')[3]
 	print('cont.',contnum)
+	print('='*60, '\n')
 
 def puthdr(inim, hdrkey, hdrval, hdrcomment=''):
 	from astropy.io import fits
 	hdr		=	fits.getheader(inim)
-	fits.setval(inim, hdrkey, value=hdrval, comment=hdrcomment)	
+	fits.setval(inim, hdrkey, value=hdrval, comment=hdrcomment)
 	comment     = inim+'\t'+'('+hdrkey+'\t'+str(hdrval)+')'
 
 def headmerge(i):
@@ -148,14 +150,15 @@ fits.writeto('a'+inim,fits.getdata(inim),hdr1)
 # scamp_net(iii)
 # headmerge(iii)
 
-for i in range(len(imlist)) :
-	scamp_net(imlist[i])
-	headmerge(imlist[i])
-	fits.setval('sa'+imlist[i], 'FLXSCALE', value=1)
-	print(i+1, 'of', str(len(imlist)) )
+for i in range(len(oklist)) :
+	scamp_net(oklist[i])
+	headmerge(oklist[i])
+	fits.setval('sa'+oklist[i], 'FLXSCALE', value=1)
+	print(i+1, 'of', str(len(oklist)) )
 	print('\n')
-
-
+salist=glob.glob('saCalib*.fits')
+salist.sort()
+print ('from oklist', len(oklist), 'salist',len(salist))
 
 
 #f.close()
