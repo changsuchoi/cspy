@@ -6,8 +6,6 @@ def calibfitslist(caliblist):
     currentdir=os.getcwd()
     currentdir_split=currentdir.split('/')
     for i, j in enumerate(caliblist):
-        
-    
         # sample='Calib-DOAO-NGC3367-20180330-111526-B-60.fits'    
         # print(i,j)
         filename = j.split('.')
@@ -35,8 +33,15 @@ def calibfitslist(caliblist):
     return oklist, nolist    
 
 
-caliblist=glob.glob("Calib*.fits")
-oklist, nolist=calibfitslist(caliblist)
+if __name__=="__main__": 
 
 
-    
+    caliblist=glob.glob("Calib*.fits")
+    oklist, nolist=calibfitslist(caliblist)
+
+def calibfitslist(calibstr):
+    caliblist=glob.glob("Calib*.fits")
+    oklist, nolist=calibfitslist(caliblist)
+    print('oklist', len(oklist),'nolist', len(nolist))
+    return oklist, nolist
+   
