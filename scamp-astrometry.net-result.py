@@ -30,27 +30,6 @@ scampconfig = codedirec+'astrom.scamp'
 #imlist.sort()
 #for img in imlist: print(img)
 
-
-def oswalkfunc():
-	f=open('oswalk.list','w')
-	#workDIr = os.path.abspath(b'.')
-	for root, dirs, files in os.walk('.'): # os.walk(".", topdown = False):
-	   # all files with path names
-	   for name in files:
-	      #print(os.path.join(root, name))
-	      f.write(os.path.join(root, name)+'\n')
-	f.close()
-	with open('oswalk.list','r') as file_handle: lines = file_handle.read().splitlines()
-	print(len(lines),'files')
-	return lines
-
-
-def oswalknamesep(i):
-	filename=i.split('/')[-1]
-	head='/'.join(i.split('/')[:-1])+'/'
-	return filename, head
-
-
 def scamp_net(i):
 	newname='sa'+i
 	print('='*60, '\n')

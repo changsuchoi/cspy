@@ -1,0 +1,11 @@
+VIGNET(35,35)
+X_IMAGE
+Y_IMAGE
+FLUX_BEST                Best of FLUX_AUTO and FLUX_ISOCOR                         [count]
+FLUXERR_BEST             RMS error for BEST flux                                   [count]
+# FLUX_APER
+# FLUXERR_APER
+FLUX_RADIUS
+ELONGATION
+FLAGS
+SNR_WIN
