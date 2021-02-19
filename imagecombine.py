@@ -17,10 +17,10 @@ import matplotlib.pyplot as plt
 
 # os.system('rm *_com.fits')
 # str1=sys.argv[1]
-str1='Calib*ter.fits'
+#str1='Calib*ter.fits'
 combinestr='median'  # sys.argv[2] #  average|median|lmedian|sum|quadrature|nmodel
-if combinestr not in ['average','median','lmedian','sum','quadrature','nmodel']:
-	print ("give me one of these options,",'average','median','lmedian','sum','quadrature','nmodel')
+#if combinestr not in ['average','median','lmedian','sum','quadrature','nmodel']:
+#	print ("give me one of these options,",'average','median','lmedian','sum','quadrature','nmodel')
 
 
 com='gethead '+str1+' DATE-OBS > obj.list.date'
@@ -55,7 +55,7 @@ def imcombine(group,output):
 '''
 def imcombine(group,output):
 	#group=(",".join(group))
-	iraf.imcombine(group,output=output,combine=combinestr,project="no",reject="none",scale="none",zero="mode")	
+	iraf.imcombine(group,output=output,combine=combinestr,project="no",reject="none",scale="none",zero="mode")
 
 obsdt=[]
 for n in range(len(files)):
@@ -69,7 +69,7 @@ t = Time(obstime, format='isot', scale='utc')
 tjd=t.mjd
 #-------------------------------------------------------------
 #center time calculation and put it to header
-def centertimeheader(inim,putim) :	
+def centertimeheader(inim,putim) :
 	obsdt=[]
 	for n in range(len(inim)):
 		header=fits.getheader(inim[n])
@@ -78,36 +78,41 @@ def centertimeheader(inim,putim) :
 	tt = Time(obsdt, format='isot', scale='utc')
 	ttjd=tt.jd
 	ttjdmean=np.mean(ttjd)
-		
+
 	print (ttjd)
 	print (ttjdmean)
 	ttjdmeanutc=Time(ttjdmean,format='jd',scale='utc')
-	
+
 	putdata,putheader=fits.getdata(putim, header=True)
 	os.system('rm '+putim)
 	putheader['DATE-OBS']=ttjdmeanutc.isot
 	fits.writeto(putim, putdata, putheader, overwrite=True)
 #---------------------------------------------------------------
 
+def exposuresum(ims,expkey='EXPTIME'):
+	exps=[fits.getheader(i)[expkey] for i in ims]
+	expsum=np.sum(exps)
+	return str(int(expsum))
+
 com=[]
 for i in range(len(files)) :
 	#com.append(files[i])
 	if i==0 : com.append(files[0])
-	
+
 	else :
-		# if time between two exposures less than 10 min, then append new file to group	successive files will be combined together	
-		if (tjd[i]-tjd[i-1]) < (20/1440.) :	
+		# if time between two exposures less than 10 min, then append new file to group	successive files will be combined together
+		if (tjd[i]-tjd[i-1]) < (20/1440.) :
 			com.append(files[i])
 		else :
-			
+
 			if len(com) == 1 :
 				output=com[0][:-5]+'_'+str(len(com))+'_com.fits'
 				print ('these ',str(len(com)),' files will be combined ',com,' output = ',output+'\n')
-				os.system('cp '+com[0]+' '+output)				
+				os.system('cp '+com[0]+' '+output)
 				com=[]
 				com.append(files[i])
-				
-			else : 
+
+			else :
 				f=open('tmpcom.list','w')
 				for n in com : f.write(n+'\n')
 				f.close()
@@ -126,8 +131,7 @@ imcombine('@tmpcom.list',output)
 centertimeheader(com,output)
 print ('these ',str(len(com)),' files will be combined ',com,' output = ',output+'\n')
 os.system('rm tmpcom.list')
-#output=com[0][:-5]+'_'+str(len(com))+'_com.fits'			
+#output=com[0][:-5]+'_'+str(len(com))+'_com.fits'
 #imcombine(,output)
 
 print ('all done, check it out \n')
-
