@@ -27,7 +27,7 @@ def calibfitslist(caliblist):
             nolist.append(j)
         if len(components[3]) != 8 or  components[3][:2] !='20' :
             print(i,j,'Date value is strange')
-            nolist.append(j)        
+            nolist.append(j)
         if len(components[4]) != 6 :
             print(i,j,'Time value is strange')
             nolist.append(j)

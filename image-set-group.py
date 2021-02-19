@@ -7,60 +7,64 @@ import os
 from astropy.time import Time
 
 
-files = glob.glob('Calib*.fits')
-files.sort()
+#files = glob.glob('Calib*.fits')
+#files.sort()
 
-obsdt=[]
+#files=oklist
 
-for n in range(len(files)):
-	header=fits.getheader(files[n])
-	hobsdate=header['DATE-OBS']
-	obsdt.append(hobsdate)
-	print (hobsdate	+'\n')
+def epoch_group(files):
+	obsdt=[]
+	for n in range(len(files)):
+		header=fits.getheader(files[n])
+		hobsdate=header['DATE-OBS']
+		obsdt.append(hobsdate)
+		print (hobsdate	+'\n')
 
-t = Time(obsdt, format='isot', scale='utc')
-tjd=t.mjd
+	t = Time(obsdt, format='isot', scale='utc')
+	tjd=t.mjd
 
-f=open('comfiles.txt','w')
+	f=open('comfiles.txt','w')
 
-com=[]
-for i in range(len(files)) :
-	#com.append(files[i])
-	if i==0 : com.append(files[0])  # the 1st image
+	com=[]
+	for i in range(len(files)) :
+		#com.append(files[i])
+		if i==0 : com.append(files[0])  # the 1st image
 
-	else :                          # next images
-		# if time between two exposures less than 10 min, then append new file to group	successive files will be combined together
-		if (tjd[i]-tjd[i-1]) < (20/1440.) :
-			com.append(files[i])               # succeeding images
-		else :
+		else :                          # next images
+			# if time between two exposures less than 10 min, then append new file to group	successive files will be combined together
+			if (tjd[i]-tjd[i-1]) < (20/1440.) :
+				com.append(files[i])               # succeeding images
+			else :
 
-			if len(com) == 1 :                 # isolated single image
-				output=com[0][:-5]+'_'+str(len(com))+'_com.fits'
-				print ('these ',str(len(com)),' files will be combined ',com,' output = ',output+'\n')
-				# os.system('cp '+com[0]+' '+output)
-				for n in com : f.write(n+'\n')
-				com=[]
-				com.append(files[i])
+				if len(com) == 1 :                 # isolated single image
+					output=com[0][:-5]+'_'+str(len(com))+'_com.fits'
+					print ('these ',str(len(com)),' files will be combined ',com,' output = ',output+'\n')
+					# os.system('cp '+com[0]+' '+output)
+					for n in com : f.write(n+'\n')
+					com=[]
+					com.append(files[i])
 
-			else : 							# made set of serial images
-				#f=open('tmpcom.list','w')
-				for n in com : f.write(n+',')
-				#f.close()
-				output=com[0][:-5]+'_'+str(len(com))+'_com.fits'
-				#imcombine('@tmpcom.list',output)
-				#centertimeheader(com,output)
-				print ('these ',str(len(com)),' files will be combined ',com,' output = ',output+'\n')
-				f.write('\n')
-				com=[]
-				com.append(files[i])
+				else : 							# made set of serial images
+					#f=open('tmpcom.list','w')
+					for n in com : f.write(n+',')
+					#f.close()
+					output=com[0][:-5]+'_'+str(len(com))+'_com.fits'
+					#imcombine('@tmpcom.list',output)
+					#centertimeheader(com,output)
+					print ('these ',str(len(com)),' files will be combined ',com,' output = ',output+'\n')
+					f.write('\n')
+					com=[]
+					com.append(files[i])
+	for n in com : f.write(n+',')
+	f.write('\n')
+	f.close()
+	with open('comfiles.txt','r') as file_handle: lines = file_handle.read().splitlines()
+	print(lines)
+	return (lines)
+
+lines=epoch_group(oklist)
 
 
-for n in com : f.write(n+',')
-f.write('\n')
-f.close()
-
-
-# with open('comfiles.txt','r') as file_handle: lines = file_handle.read().splitlines()
 
 ## gregister
 

@@ -7,7 +7,7 @@ import glob
 import os
 
 # images_to_align = sorted(glob.glob("images/*.fits"))
-images_to_align = sorted(glob.glob('Calib-*.fits'))
+# images_to_align = sorted(glob.glob('Calib-*.fits'))
 ref_image = "ref.fits"
 
 
@@ -93,9 +93,10 @@ def alipy_in2ref(ref_image,images_to_align):
 # im='Calib-LSGT-NGC3367-20190630-084141-r-180.fits'
 # ref_image=['ref.fits']
 # output name = gr_Calib-LSGT-NGC3367-20190630-084141-r-180.fits
-def alipy_ref2in(im,ref_image):
+def alipy_ref2in(im,ref_image=['ref.fits']):
     '''
     ref_image should be a list!
+    like ref_image=['ref.fits']
     '''
     identifications= identify_transform(im, ref_image, rad= 5, nb=500, verbose=False, visual=False)
     align_images(im, identifications, iraf=True, outdir='alipy_out')
@@ -105,18 +106,23 @@ def alipy_ref2in(im,ref_image):
 
 
 
-with open('comfiles.txt','r') as file_handle: lines = file_handle.read().splitlines()
-for ii in lines:
-    if len(ii) == 1 :
-        print(ii[0], 'single image')
-        os.system('mv '+ii[0]+' gr'+ii[0])
-    else :
-        ref_image=ii.split(',')[0]
-        images_to_align=ii.split(',')[:-1]
-        print (ii.split(','))
-        identifications= identify_transform(ref_image, images_to_align, rad= 5, nb=500, verbose=False, visual=False)
-        align_images(ref_image, identifications, iraf=True, outdir='alipy_out')
-
+# with open('comfiles.txt','r') as file_handle: lines = file_handle.read().splitlines()
+def alipy_epoch(lines):
+    for iii in lines:
+        ii=iii[:-1].split(',')
+        print('='*60,'\n')
+        print(lines.index(iii), 'of', len(iii))
+        if len(ii) == 1 :
+            print(ii[0], 'single image')
+            os.system('mv '+ii[0]+' gr'+ii[0])
+            os.system('mv '+os.path.splitext(ii[0])+'_gregister.fits')
+        else :
+            ref_image=ii[0]
+            images_to_align=ii
+            print (len(ii), 'files will be registerd')
+            identifications= identify_transform(ref_image, images_to_align, rad= 5, nb=500, verbose=False, visual=False)
+            align_images(ref_image, identifications, iraf=True, outdir='alipy_out')
+    os.system('mv alipy_out/*gregister.fits .')
 
 
 os.system('rename _gregister.fits .fits alipy_out/*gregister*')
