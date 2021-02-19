@@ -1,8 +1,3 @@
-# read list and make images combined for oneday 3 fits files
-# mean exposure start time will be update to DATE-OBS keyword in combined image header
-# python imagecombine.py 'gre*.fits' median
-# python 3 porting completed, 2019.05.28, Changsu Choi
-
 from astropy.io import ascii
 from astropy.io import fits
 import astropy.units as u
@@ -14,33 +9,7 @@ import os, sys
 import numpy as np
 import matplotlib.pyplot as plt
 
-# os.system('rm *_com.fits')
-# str1=sys.argv[1]
-combinestr='median'  # sys.argv[2] #  average|median|lmedian|sum|quadrature|nmodel
-#if combinestr not in ['average','median','lmedian','sum','quadrature','nmodel']:
-#	print ("give me one of these options,",'average','median','lmedian','sum','quadrature','nmodel')
-
-
-
-'''
-def imcombine(group,output):
-	group=(",".join(group))
-#	combine=average
-	iraf.imcombine.unlearn()
-	iraf.imcombine.setParam('input',group)
-	iraf.imcombine.setParam('output',output)
-	iraf.imcombine.setParam('combine','median')
-	iraf.imcombine.project='no'
-#	iraf.imcombine.setParam('combine','average')
-	iraf.imcombine.setParam('reject','none')
-	iraf.imcombine.setParam('scale','mode')
-	iraf.imcombine.setParam('zero','mode')
-	iraf.imcombine(group,output=output)
-'''
-def imcombine(group,output):
-	group=(",".join(group))
-	iraf.imcombine(group,output=output,combine=combinestr,
-					project="no",reject="none",scale="none",zero="mode")
+os.system('swarp -d > default.swarp')
 
 #-------------------------------------------------------------
 #center time calculation and put it to header
@@ -80,26 +49,54 @@ def exposuresum(ims,expkey='EXPTIME'):
 	expsum=np.sum(exps)
 	return str(int(expsum))
 
-glist=glob.glob('Calib*gregister.fits')
-glist.sort()
-glines=epoch_group(glist)
+def swarpcom(imlist):
+	newdt, newname=centertimeheader(imlist)
+	param_dict={
+	'IMAGEOUT_NAME'     : newname,
+	'COMBINE'           : 'Y',
+	'COMBINE_TYPE'      : 'MEDIAN',
+	'SUBTRACT_BACK'     : 'N',
+	'WRITE_FILEINFO'    : 'Y',
+	'BACK_TYPE'         : 'AUTO',
+	'BACK_DEFAULT'      : '0.0',
+	'BACK_SIZE'         : '64',
+	'BACK_FILTERSIZE'   : '3',
+	'CELESTIAL_TYPE'    : 'NATIVE',
+	'PROJECTION_TYPE'   : 'TPV',
+	'RESAMPLE'          : 'Y',
+	'FSCALE_KEYWORD'    : 'FLXSCALE',
+	'COPY_KEYWORDS'     : 'OBJECT,DATE-OBS,FILTER',
+	'WRITE_FILEINFO'    : 'Y',
+	'WRITE_XML'         : 'N',
+	}
+	#
+	#output=os.path.splitext(inlist[0])[0]+'_'+str(len(inlist))+'_com'+os.path.splitext(inlist[0])[1]
+	optstr=''
+	for i in param_dict:
+		#print(' -{} {}'.format(i,param_dict[i]))
+		optstr += ' -{} {}'.format(i,param_dict[i])
+	swarpcom='swarp -c default.swarp ' + ','.join(imlist) + optstr
+	#print(swarpcom)
+	os.system(swarpcom)
 
-# EXP_TIME EXPTIME header keyword
-# alllist=glob.glob('*Calib*.fits')
-# for m in alllist:
-# 		puthdr(m,'EXPTIME', fits.getheader(m)['EXP_TIME'])
 
-for i in glines:
+
+salist=glob.glob('saCalib*.fits')
+salist.sort()
+salines= epoch_group(salist)
+#salines[-1][:-1].split(',')
+
+for i in salines:
 	ii=i[:-1].split(',')
 	if len(ii)==1 :
 		if os.path.isfile(centertimeheader(ii)[1]) : pass
 		else:
 			print("single image")
 			os.system('cp '+ii[0]+' '+centertimeheader(ii)[1])
-			puthdr(centertimeheader(ii)[1],'DATE-OBS', centertimeheader(ii)[0])
+			#puthdr(centertimeheader(ii)[1],'DATE-OBS', centertimeheader(ii)[0])
 	else:
 		if os.path.isfile(centertimeheader(ii)[1]) : pass
 		else:
 			print(len(ii),'images will be combined', centertimeheader(ii)[1])
-			imcombine(i[:-1], centertimeheader(ii)[1])
+			swarpcom(ii)
 			puthdr(centertimeheader(ii)[1],'DATE-OBS', centertimeheader(ii)[0])

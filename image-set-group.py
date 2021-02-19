@@ -32,7 +32,7 @@ def epoch_group(files):
 
 		else :                          # next images
 			# if time between two exposures less than 10 min, then append new file to group	successive files will be combined together
-			if (tjd[i]-tjd[i-1]) < (20/1440.) :
+			if (tjd[i]-tjd[i-1]) < (10/1440.) :
 				com.append(files[i])               # succeeding images
 			else :
 
@@ -63,6 +63,7 @@ def epoch_group(files):
 	return (lines)
 
 lines=epoch_group(oklist)
+
 
 
 
