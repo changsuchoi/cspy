@@ -96,6 +96,7 @@ def scamp_net(i):
 	contnum = scampout.split(line1[0])[1].split('\n')[1].split('"')[1].split(' ')[3]
 	print('cont.',contnum)
 	print('='*60, '\n')
+	return(contnum)
 
 def puthdr(inim, hdrkey, hdrval, hdrcomment=''):
 	from astropy.io import fits
@@ -151,9 +152,10 @@ fits.writeto('a'+inim,fits.getdata(inim),hdr1)
 # headmerge(iii)
 
 for i in range(len(oklist)) :
-	scamp_net(oklist[i])
+	contnum=scamp_net(oklist[i])
 	headmerge(oklist[i])
 	fits.setval('sa'+oklist[i], 'FLXSCALE', value=1)
+	fits.setval('sa'+oklist[i], 'SCAMPCON', value=contnum, hdrcomment='SCAMP cont. num')
 	print(i+1, 'of', str(len(oklist)) )
 	print('\n')
 salist=glob.glob('saCalib*.fits')
