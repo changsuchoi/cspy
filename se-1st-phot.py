@@ -129,14 +129,28 @@ def zpcal(mtbl1,filname, magtype):
     zperrp=np.sqrt( np.sum(mtbl1[filerr][selected]**2 + \
 						mtbl1[magtype[:3]+'ERR'+magtype[3:]][selected]**2)\
 						/ len(mtbl1) )
-    fwhm_img=sigma_clipped_stats(mtbl1['FWHM_IMAGE'], sigma=2, maxiters=10)
-    #fwhm_wcs=sigma_clipped_stats(mtbl1['FWHM_WORLD'], sigma=2, maxiters=10)
     print(magtype, 'zp', '{},'.format(round(zp2[0],3)),
-	 	'zperr', '{},'.format(round(zperrp,3)), 
-		'FWHM_IMAGE','{},'.format(round(fwhm_img[0],3)),
+	 	'zperr', '{},'.format(round(zperrp,3)),
 		len(mtbl1[selected]),'stars from',len(mtbl1))
-    return zp2, selected,fwhm_img[0],zperrp
+    return zp2, selected,zperrp
 
+def fwhm_img(im,mtbl1):
+	fwhm_img=sigma_clipped_stats(mtbl1['FWHM_IMAGE'], sigma=3, maxiters=10)
+	filtered_data=sigma_clip(mtbl1['FWHM_IMAGE'],sigma=3,maxiters=10)
+	selected, nonselected= ~filtered_data.mask, filtered_data.mask
+	print('FWHM_IMAGE','{}'.format(round(fwhm_img[0],3)),
+		len(mtbl1[selected]),'stars from',len(mtbl1))
+	puthdr(im, 'FWHM_PIX', '{}'.format(round(fwhm_img[0],3)), hdrcomment='FWHM PIXEL VALUE')
+	return fwhm_img[0]
+'''
+def fwhm_wcs(mtbl1):
+	fwhm_wcs=sigma_clipped_stats(mtbl1['FWHM_WORLD'], sigma=3, maxiters=10)
+	filtered_data=sigma_clip(mtbl1['FWHM_WORLD'],sigma=3,maxiters=10)
+	selected, nonselected= ~filtered_data.mask, filtered_data.mask
+	print('FWHM_WORLD','{},'.format(round(fwhm_wcs[0]*3600,3)),
+		len(mtbl1[selected]),'stars from',len(mtbl1))
+	return fwhm_wcs[0]*3600
+'''
 def zp_plot(mtbl1, zp2, selected, magtype, im, filname='R', filerr='Rerr'):
 	fn=os.path.splitext(im)[0]
 	zp=mtbl1[filname]-mtbl1[magtype]
@@ -191,13 +205,6 @@ def fitplot(im, mtbl1, magtype, selected):
 	fig.colorbar(img)
 	plt.savefig(os.path.splitext(im)[0]+'_'+magtype+'.png')
 	plt.close()
-
-setbl=ascii.read(fn+'.se1')
-refcat='../../ps1-Tonry-NGC3367.cat'
-reftbl=ascii.read(refcat)
-mtbl=matching(setbl, pstbl, setbl['ALPHA_J2000'],setbl['DELTA_J2000'],pstbl['ra'],pstbl['dec'])
-
-
 
 # 5sigma detection limit estimate for MAG_AUTO, MAG_PSF
 # error fitting polinomial
