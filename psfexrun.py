@@ -73,10 +73,15 @@ def psfex(i):
 	os.system(imcopycom)
 
 inlist=glob.glob("*Calib*.fits")
-for inimage in inlist :
+inlist.sort()
+
+for j,inimage in enumerate(inlist) :
+	print('='*60,'\n')
+	print(j+1,'of ',len(inlist))
 	if os.path.isfile(os.path.splitext(inimage)[0]+'.psf') : pass
 	else: psfex(inimage)
-os.system('rm snap_*.fits')
+
+os.system('rm snap_*.fits,*.xml')
 
 
 print ('all done')

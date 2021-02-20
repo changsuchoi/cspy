@@ -13,9 +13,6 @@ from astropy.stats import sigma_clipping
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-
-
-
 def puthdr(inim, hdrkey, hdrval, hdrcomment=''):
 	from astropy.io import fits
 	hdr		=	fits.getheader(inim)
@@ -40,7 +37,7 @@ separam_noPSF = 'se1_noPSF.param'
 seconv      ='default.conv'
 sennw       ='default.nnw'
 DETECT_MINAREA = str(5)
-DETECT_THRESH  = str(3)
+DETECT_THRESH  = str(5)
 DEBLEND_NTHRESH = str(32)
 DEBLEND_MINCONT = str(0.005)
 
@@ -103,39 +100,49 @@ def matching(intbl, reftbl, inra, indec, refra, refdec, sep=2.0):
     #mtbl.write(mergename, format='ascii', overwrite=True)
     return mtbl
 
+def limitmag(N, zp, aper, skysigma):			# 3? 5?, zp, diameter [pixel], skysigma
+	import numpy as np
+	R           = float(aper)/2.				# to radius
+	braket      = N*skysigma*np.sqrt(np.pi*(R**2))
+	upperlimit  = float(zp)-2.5*np.log10(braket)
+	return round(upperlimit, 3)
 
 
-setbl=ascii.read(fn+'.se1')
-refcat='../../ps1-Tonry-NGC3367.cat'
-reftbl=ascii.read(refcat)
-mtbl=matching(setbl, pstbl, setbl['ALPHA_J2000'],setbl['DELTA_J2000'],pstbl['ra'],pstbl['dec'])
-def starcut(mtbl,lowmag=14,highmag=19,filname='R',err='MAGERR_AUTO'):
+def starcut(mtbl,lowmag=14,highmag=19,filname='R',magtype='MAG_AUTO'):
 	idx=np.where( (mtbl['SNR_WIN'] >20) &
 				(mtbl['FLAGS'] == 0) &
 				(mtbl[filname] <19) &
 				(mtbl[filname] > 14) &
-				(mtbl[err]<0.1)		)
+				(mtbl[magtype[:3]+'ERR'+magtype[3:]]<0.1)		)
 	return mtbl[idx]
 
 #zp calculation
 magtypes=['MAG_AUTO', 'MAG_PSF', 'MAG_APER','MAG_APER_1','MAG_APER_2','MAG_APER_3']
+
 def zpcal(mtbl1,filname, magtype):
     zp=mtbl1[filname]-mtbl1[magtype]
     #zp3=sigma_clipped_stats(zp, sigma=3, maxiters=10)
     zp2=sigma_clipped_stats(zp, sigma=2, maxiters=10)
     print ('zp ',zp2[0], 'zp err',zp2[2])
-    sig2,sig3=[],[]
-    zp3a,zp2a=[],[]
-    for i in range(len(zp)): zp2a.append(zp2[0])
-    for i in range(len(zp)): sig2.append(zp2[2])
     filtered_data=sigma_clip(zp,sigma=2,maxiters=10)
     selected, nonselected= ~filtered_data.mask, filtered_data.mask
-	return zp2, selected
+    zperrp=np.sqrt( np.sum(mtbl1[filerr][selected]**2 + \
+						mtbl1[magtype[:3]+'ERR'+magtype[3:]][selected]**2)\
+						/ len(mtbl1) )
+    fwhm_img=sigma_clipped_stats(mtbl1['FWHM_IMAGE'], sigma=2, maxiters=10)
+    #fwhm_wcs=sigma_clipped_stats(mtbl1['FWHM_WORLD'], sigma=2, maxiters=10)
+    print(magtype, 'zp', '{},'.format(round(zp2[0],3)),
+	 	'zperr', '{},'.format(round(zperrp,3)), 
+		'FWHM_IMAGE','{},'.format(round(fwhm_img[0],3)),
+		len(mtbl1[selected]),'stars from',len(mtbl1))
+    return zp2, selected,fwhm_img[0],zperrp
 
-def zp_plot(mtbl1,zp2,selcted,filname='R',filerr='Rerr',magtype,fn):
+def zp_plot(mtbl1, zp2, selected, magtype, im, filname='R', filerr='Rerr'):
+	fn=os.path.splitext(im)[0]
 	zp=mtbl1[filname]-mtbl1[magtype]
 	xr=np.linspace(np.min(mtbl1[filname]), np.max(mtbl1[filname]), len(zp))
-	zperrp=np.sqrt(mtbl1[filerr]**2+mtbl1[magtype[:3]+'ERR'+magtype[3:]]**2 )
+	magerrtype=magtype[:3]+'ERR'+magtype[3:]
+	zperrp=np.sqrt(mtbl1[filerr]**2+mtbl1[magerrtype]**2 )
 	plt.plot(mtbl1[filname],zp,'o')
 	plt.errorbar(mtbl1[filname],zp,yerr=zperrp,fmt='o',capsize=1)
 	plt.ylim(zp2[0]-2,zp2[0]+2)
@@ -152,32 +159,89 @@ def zp_plot(mtbl1,zp2,selcted,filname='R',filerr='Rerr',magtype,fn):
 	plt.ylabel('Zeropoint (AB Mag)')
 	plt.xlabel(filname +' Reference Mag (AB)')
 	plt.savefig(fn+'_'+filname+'_'+magtype+'_zp.png')
+	plt.close()
 
 # fits to png with regions
-def fitplot(im, magtype,selected):
-    import matplotlib.pyplot as plt
-    from astropy.wcs import WCS
-    from astropy.io import fits
-    from astropy.visualization import MinMaxInterval,ZScaleInterval,PercentileInterval
-    from astropy.visualization import SqrtStretch,LinearStretch
-    from astropy.visualization import ImageNormalize
+def fitplot(im, mtbl1, magtype, selected):
+	import matplotlib.pyplot as plt
+	from astropy.wcs import WCS
+	from astropy.io import fits
+	from astropy.visualization import MinMaxInterval,ZScaleInterval,PercentileInterval
+	from astropy.visualization import SqrtStretch,LinearStretch
+	from astropy.visualization import ImageNormalize
+	imdata,imhdr=fits.getdata(im,header=True)
+	norm = ImageNormalize(imdata,
+			interval=PercentileInterval(99.5),
+			stretch=LinearStretch()
+							)
+	wcs=WCS(imhdr)
+	fig,ax=plt.subplots()
+	ax=plt.subplot(projection=wcs)
+	ax.set_xlabel('RA')
+	ax.set_ylabel('DEC')
 
-    imdata,imhdr=fits.getdata(im,header=True)
-    norm = ImageNormalize(imdata, interval=PercentileInterval(99.5), stretch=LinearStretch())
-    wcs=WCS(imhdr)
+	#ax.invert_xaxis()
+	ax.set_title(im+' '+magtype)
+	ax.scatter(mtbl1[selected]['ALPHA_J2000'],mtbl1[selected]['DELTA_J2000'],
+		transform=ax.get_transform('fk5'),s=20, edgecolor='green',facecolor='none')
+	ax.scatter(mtbl1[~selected]['ALPHA_J2000'],mtbl1[~selected]['DELTA_J2000'],
+		transform=ax.get_transform('fk5'),s=20, edgecolor='red',facecolor='none')
+	img=ax.imshow(imdata,cmap='gray',norm=norm,origin='lower')
+	ax.invert_yaxis()
+	fig.colorbar(img)
+	plt.savefig(os.path.splitext(im)[0]+'_'+magtype+'.png')
+	plt.close()
 
-    fig,ax=plt.subplot(projection=wcs)
-    ax.imshow(data,cmap='gray',norm=norm,origin='lower')
-    ax.invert_yaxis()
-
-    fig.colorbar(ax)
-
-
-# result print, file, header
+setbl=ascii.read(fn+'.se1')
+refcat='../../ps1-Tonry-NGC3367.cat'
+reftbl=ascii.read(refcat)
+mtbl=matching(setbl, pstbl, setbl['ALPHA_J2000'],setbl['DELTA_J2000'],pstbl['ra'],pstbl['dec'])
 
 
 
-
+# 5sigma detection limit estimate for MAG_AUTO, MAG_PSF
+# error fitting polinomial
+def UL_5sig_err(im,setbl,mtbl,mtbl1,magtype,zp2[0]):
+	fn=os.path.splitext(im)[0]
+	from astropy.modeling import models, fitting
+	import numpy as np
+	magerrtype = magtype[:3]+'ERR'+magtype[3:]
+	x=mtbl1[magtype]
+	y=mtbl1[magerrtype]
+	#x=setbl['MAG_AUTO']
+	#y=setbl['MAGERR_AUTO']
+	x=x[np.where(y<1)]
+	y=y[np.where(y<1)]
+	#fit_init=models.Polynomial1D(7)
+	fit_init=models.Exponential1D()
+	fit_t=fitting.LevMarLSQFitter()
+	#fit_t=fitting.LinearLSQFitter()
+	t=fit_t(fit_init,x,y)
+	#t1=fit_t(fit_init,y,x)
+	#z1=np.polyfit(y,x,2)
+	#z2=np.polyfit(y,x,3)
+	#p1=np.poly1d(z1)
+	#p2=np.poly1d(z2)
+	plt.plot(setbl[magtype]+zp2[0],setbl[magerrtype],'ro')
+	plt.plot(mtbl[magtype]+zp2[0],mtbl[magerrtype],'ko')
+	plt.plot(x+zp2[0],y,'bo')
+	plt.xlabel('Mag')
+	plt.ylabel('Error')
+	plt.xlim(10,25)
+	plt.ylim(-0.1,0.5)
+	xp=np.linspace(-20,0,20001)
+	plt.plot(xp+zp2[0],t(xp),'--')
+	plt.hlines(0.2,10,25)
+	idx_min=np.where(np.abs(t(xp)-0.198) == np.min(np.abs(t(xp)-0.198)))
+	xp[idx_min]+zp2[0] #
+	plt.vlines(xp[idx_min]+zp2[0],-0.1,0.5)
+	# result print, file, header
+	plt.text(12,0.4,'5 sigma Detection Limit error=0.198')
+	plt.text(12,0.3,'5sig_UL = '+'{}'.format(round((xp[idx_min]+zp2[0])[0],3)))
+	plt.title(fn+ ' '+ mag+' '+'5 sig Detection Limit')
+	plt.savefig(fn+'_'+mag+'_'+'5sigUL.png')
+	plt.close()
+	return '{}'.format(round((xp[idx_min]+zp2[0])[0],3))
 
 
 
