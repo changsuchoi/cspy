@@ -11,6 +11,7 @@ MAG_GROWTH(60)           #Cumulated magnitude growth-curve                      
 MAG_GROWTHSTEP(1)        #Step for growth-curves                                    [pixel]
 FLUX_GROWTH(60)          #Cumulated growth-curve                                    [count]
 FLUX_GROWTHSTEP(1)       #   Step for growth-curves                                    [pixel]
+SNR_WIN                  Gaussian-weighted SNR   
 #MAG_APER(20)               #  Fixed aperture magnitude vector                           [mag]
 #MAGERR_APER(20)            #  RMS error vector for fixed aperture mag.                  [mag]
 #FLUX_APER(20)                # Flux vector within fixed circular aperture(s)             [count]
