@@ -1,9 +1,9 @@
-# code for image cut and copy from original image to small images 
-# in rectangluar region of input size 
+# code for image cut and copy from original image to small images
+# in rectangluar region of input size
 # and input center position (RA,DEC) ind degree unit
-# python imagecut.py test.fits 
+# python imagecut.py test.fits
 # if you want to cut image in pixel coordinates, then use 'image' NOT 'physical' in DS9 window.
- 
+
 # test.fits -> test-cut.fits
 
 # Changsu Choi 2017/8/22
@@ -71,7 +71,7 @@ def imcopypix(inim,region):
 	#hdr= fits.getheader(inim)
 	#w = WCS(hdr)
 	#px, py = w.wcs_world2pix(ra, dec, 1)
-	#print 'center pixel coordinates', int(px), int(py) 
+	#print 'center pixel coordinates', int(px), int(py)
 	#xpscale,ypscale=wcsutils.proj_plane_pixel_scales(w)*60 # pixel scale armin unit
 	#pixscale=(xpscale+ypscale)/2.
 
@@ -86,9 +86,64 @@ def imcopypix(inim,region):
 	iraf.imcopy(chinim,output=outname)
 
 
-imcopy(im,size)
+
+#2D cutout WCS example
+'''
+>>> from astropy.coordinates import SkyCoord
+>>> from astropy.wcs import WCS
+>>> position = SkyCoord('13h11m29.96s -01d19m18.7s', frame='icrs')
+>>> wcs = WCS(naxis=2)
+>>> rho = np.pi / 3.
+>>> scale = 0.05 / 3600.
+>>> wcs.wcs.cd = [[scale*np.cos(rho), -scale*np.sin(rho)],
+...               [scale*np.sin(rho), scale*np.cos(rho)]]
+>>> wcs.wcs.ctype = ['RA---TAN', 'DEC--TAN']
+>>> wcs.wcs.crval = [position.ra.to_value(u.deg),
+...                  position.dec.to_value(u.deg)]
+>>> wcs.wcs.crpix = [50, 100]
+
+# Download an example FITS file, create a 2D cutout, and save it to a
+# new FITS file, including the updated cutout WCS.
+from astropy.io import fits
+from astropy.nddata import Cutout2D
+from astropy.utils.data import download_file
+from astropy.wcs import WCS
 
 
-for i in infile : imcopy(i,size)
+def download_image_save_cutout(url, position, size):
+    # Download the image
+    filename = download_file(url)
+
+    # Load the image and the WCS
+    hdu = fits.open(filename)[0]
+    wcs = WCS(hdu.header)
+
+    # Make the cutout, including the WCS
+    cutout = Cutout2D(hdu.data, position=position, size=size, wcs=wcs)
+
+    # Put the cutout image in the FITS HDU
+    hdu.data = cutout.data
+
+    # Update the FITS header with the cutout WCS
+    hdu.header.update(cutout.wcs.to_header())
+
+    # Write the cutout to a new FITS file
+    cutout_filename = 'example_cutout.fits'
+    hdu.writeto(cutout_filename, overwrite=True)
+
+
+if __name__ == '__main__':
+    url = 'https://astropy.stsci.edu/data/photometry/spitzer_example_image.fits'
+
+    position = (500, 300)
+    size = (400, 400)
+    download_image_save_cutout(url, position, size)
+'''
+
+
+#imcopy(im,size)
+
+
+#for i in infile : imcopy(i,size)
 
 print 'done.\n'

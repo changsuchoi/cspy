@@ -24,12 +24,14 @@ from multiprocessing import Process, Pool
 def wcsremap(im,refim='ref.fits'):
 	#print inim
 	outim='regw_'+im
-	wcsremapstr='wcsremap -template '+refim+' -source '+im+' -outIm '+outim
-    # match to ref image
-	wcsremapstr='wcsremap -template '+im+' -source '+refim+' -outIm '+outim
-    # match to input image
-	os.system(wcsremapstr)
-	print (outim)
+	if os.path.isfile(outim):pass
+	else:
+		#wcsremapstr='wcsremap -template '+refim+' -source '+im+' -outIm '+outim -v
+    	# match to ref image
+		wcsremapstr='wcsremap -template '+im+' -source '+refim+' -outIm '+outim -v
+    	# match to input image
+		os.system(wcsremapstr)
+		print (outim)
 
 
 

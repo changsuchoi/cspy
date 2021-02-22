@@ -90,7 +90,9 @@ def alipy_ref2in(im,ref_image=['ref.fits']):
     ref_image should be a list!
     like ref_image=['ref.fits']
     '''
-    identifications= identify_transform(im, ref_image, rad= 5, nb=500, verbose=False, visual=False)
-    align_images(im, identifications, iraf=True, outdir='alipy_out')
     newname = 'regg_'+os.path.splitext(im)[0]+os.path.splitext(im)[1]
-    os.system('mv alipy_out/'+os.path.splitext(ref_image[0])[0]+'_gregister'+os.path.splitext(ref_image[0])[1]+' '+newname)
+    if os.path.isfile(newname): pass
+    else:
+        identifications= identify_transform(im, ref_image, rad= 5, nb=500, verbose=False, visual=False)
+        align_images(im, identifications, iraf=True, outdir='alipy_out')
+        os.system('mv alipy_out/'+os.path.splitext(ref_image[0])[0]+'_gregister'+os.path.splitext(ref_image[0])[1]+' '+newname)
