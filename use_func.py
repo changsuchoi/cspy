@@ -14,8 +14,8 @@ def pixelscale(i):
 	cd21 = fits.getheader(i)['CD2_1']
 	cd22 = fits.getheader(i)['CD2_2']
 	pixscale=round(np.sqrt(cd11**2 + cd21**2) *3600 ,4)
-	puthdr(i,'PSCALE',pixscale)
-	print('Pixel scale =', pixscale,'\"')
+	puthdr(i,'PSCALE',round(pixscale,3))
+	#print('Pixel scale =', pixscale,'\"')
 	return pixscale
 
 

@@ -6,6 +6,10 @@ def se1st(im):
 	fn=os.path.splitext(im)[0]
 	# se 1st
 	skyval, skysig=secom(im,psf=True)
+	puthdr(im, 'SKYVAL', skyval,
+		hdrcomment='sky median value form sextractor')
+	puthdr(im, 'SKYSIG', skysig,
+		hdrcomment='sky sigma value form sextractor')
 	setbl=ascii.read(fn+'.se1')
 	refcat='../../ps1-Tonry-NGC3367.cat'
 	reftbl=ascii.read(refcat)
@@ -80,47 +84,8 @@ def se1st(im):
 	puthdr(im, 'ZPE_AP7',round(zperr,3), hdrcomment='7 arcsec aperture'+' '+'ZERO POINT ERROR')
 	sig5ul=	UL_5sig_err(im,setbl,mtbl,mtbl1,magtype,zp2)
 	ul5=limitmag(5, zp2[0], 3, skysig)
-	puthdr(im, 'UL5_AP7', ul5,	hdrcomment='AP7'+' '+'5 sigma upperlimit')
+	puthdr(im, 'UL5_AP5', ul5,	hdrcomment='AP5'+' '+'5 sigma upperlimit')
 
-	magtype='MAG_APER_3'
-	magerrtype=magtype[:3]+'ERR'+magtype[3:]
-	mtbl1=starcut(mtbl,filname=filname,magtype=mag)
-	zp2,selected, zperr=zpcal(mtbl1,filname,magtype)
-	zp_plot(mtbl1,zp2,selected,magtype,im,filname=filname,filerr=filerr)
-	fitplot(im,mtbl1,magtype,selected)
-	puthdr(im, 'ZP_F10', round(zp2[0],3), hdrcomment='1.0 FWHM APERTURE'+' '+'ZERO POINT(AB)' )
-	puthdr(im, 'ZPE_F10',round(zperr,3), hdrcomment='1.0 FWHM APERTURE'+' '+'ZERO POINT ERROR')
-	sig5ul=	UL_5sig_err(im,setbl,mtbl,mtbl1,magtype,zp2)
-	ul5=limitmag(5, zp2[0], 3, skysig)
-	puthdr(im, 'UL5_F10', ul5,	hdrcomment='1.0 FWHM APERTURE'+' '+'5 sigma upperlimit')
-
-	magtype='MAG_APER_4'
-	magerrtype=magtype[:3]+'ERR'+magtype[3:]
-	mtbl1=starcut(mtbl,filname=filname,magtype=mag)
-	zp2,selected, zperr=zpcal(mtbl1,filname,magtype)
-	zp_plot(mtbl1,zp2,selected,magtype,im,filname=filname,filerr=filerr)
-	fitplot(im,mtbl1,magtype,selected)
-	puthdr(im, 'ZP_F15', round(zp2[0],3), hdrcomment='1.5 FWHM APERTURE'+' '+'ZERO POINT(AB)' )
-	puthdr(im, 'ZPE_F15',round(zperr,3), hdrcomment='1.5 FWHM APERTURE'+' '+'ZERO POINT ERROR')
-	sig5ul=	UL_5sig_err(im,setbl,mtbl,mtbl1,magtype,zp2)
-	ul5=limitmag(5, zp2[0], 3, skysig)
-	puthdr(im, 'UL5_F15', ul5,	hdrcomment='1.5 FWHM APERTURE'+' '+'5 sigma upperlimit')
-
-	magtype='MAG_APER_5'
-	magtype='MAG_APER_6'
-	magtype='MAG_APER_7'
-
-	magtype='MAG_APER_8'
-	magerrtype=magtype[:3]+'ERR'+magtype[3:]
-	mtbl1=starcut(mtbl,filname=filname,magtype=mag)
-	zp2,selected, zperr=zpcal(mtbl1,filname,magtype)
-	zp_plot(mtbl1,zp2,selected,magtype,im,filname=filname,filerr=filerr)
-	fitplot(im,mtbl1,magtype,selected)
-	puthdr(im, 'ZP_OPTA', round(zp2[0],3), hdrcomment='Optimal APERTURE'+' '+'ZERO POINT(AB)' )
-	puthdr(im, 'ZPE_OPTA',round(zperr,3), hdrcomment='Optimal APERTURE'+' '+'ZERO POINT ERROR')
-	sig5ul=	UL_5sig_err(im,setbl,mtbl,mtbl1,magtype,zp2)
-	ul5=limitmag(5, zp2[0], 3, skysig)
-	puthdr(im, 'UL5_OPTA', ul5,	hdrcomment='Optimal APERTURE'+' '+'5 sigma upperlimit')
 
 
 imlist=glob.glob('Calib*.fits')+\
@@ -128,14 +93,7 @@ imlist=glob.glob('Calib*.fits')+\
 		glob.glob('Calib*com.fits')
 
 imlist.sort()
-badlist=[]
 for nn,im in enumerate(imlist) :
 	print('=' *60,'\n')
 	print(nn+1, 'of ',len(imlist),im)
-	if fits.getheader(im).get('UL5_AP7',default=True):
-		try : se1st(im)
-		except:
-			print(im,'has a problem, add it to badlist')
-			badlist.append(im)
-	else: pass
-print(badlist)
+	se1st(im)

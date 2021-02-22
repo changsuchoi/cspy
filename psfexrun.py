@@ -69,8 +69,8 @@ def psfex(i):
 	os.system(psfexcom)
 	print (i, ' fwhm value is ', psfexxml(fn+'.psfex.xml'))
 	#imcopy('snap_'+i,'psf-'+i)
-	imcopycom='imcopy snap_'+i+'[100:125,100:125] psf-'+i
-	os.system(imcopycom)
+	#imcopycom='imcopy snap_'+i+'[100:125,100:125] psf-'+i
+	#os.system(imcopycom)
 
 inlist=glob.glob("*Calib*.fits")
 inlist.sort()

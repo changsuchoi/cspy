@@ -15,7 +15,7 @@ import glob
 import astropy.io.ascii as ascii
 import subprocess
 
-codedirec   = '/data7/cschoi/code/astrom/astromtest/'
+codedirec   = '/data7/cschoi/code/cspy/astrom/astromtest/'
 seconfig    = codedirec+'astrom.sex'
 separam     = codedirec+'astrom.par'
 scampconfig = codedirec+'astrom.scamp'

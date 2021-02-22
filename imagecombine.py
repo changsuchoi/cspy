@@ -103,3 +103,4 @@ for i in glines:
 			print(len(ii),'images will be combined', centertimeheader(ii)[1])
 			imcombine(i[:-1], centertimeheader(ii)[1])
 			puthdr(centertimeheader(ii)[1],'DATE-OBS', centertimeheader(ii)[0])
+os.system('rm *gregister.fits')
