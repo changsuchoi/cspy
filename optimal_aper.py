@@ -84,9 +84,6 @@ def fwhm_img(im,mtbl1):
 	puthdr(im, 'FWHM_PIX', round(fwhm_img[0],3), hdrcomment='FWHM PIXEL VALUE')
 	return round(fwhm_img[0],3)
 
-
-
-
 def find_opt_aper(im):
 	skymed, skysig=segrowthcom(im)
 	fn=os.path.splitext(im)[0]

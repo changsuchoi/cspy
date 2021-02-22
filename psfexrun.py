@@ -60,6 +60,7 @@ def psfex(i):
 	#opt3 = ' -CHECKPLOT_NAME fwhm, ellipticity, counts, countfrac, chi2, resi '
 	#opt4 = ' -CHECKIMAGE_TYPE CHI,PROTOTYPES,SAMPLES,RESIDUALS,SNAPSHOTS,MOFFAT,-MOFFAT,-SYMMETRICAL '
 	opt4 = ' -CHECKIMAGE_TYPE SNAPSHOTS '
+	opt4 = ' -CHECKIMAGE_TYPE NONE '
 	#opt5 = ' -CHECKIMAGE_NAME chi,proto,samp,resi,snap,moffat,submoffat,subsym '
 	opt5 = ' -CHECKIMAGE_NAME snap '
 	#+fn+'.psfex_chi.fits '+fn+'.psfex_proto.fits '+fn+'.psfex_sample.fits '+fn+'.psfex_resi.fits '+fn+'.psfex_snap.fits '

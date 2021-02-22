@@ -57,18 +57,11 @@ def scamp_net(i):
 	opt6= ' -SN_THRESHOLDS 10.0,100.0'      # S/N thresholds (in sigmas) for all and high-SN sample
 	opt7= ' -FWHM_THRESHOLDS 0.0,100.0'       # FWHM thresholds (in pixels) for sources
 	opt8= ' -ELLIPTICITY_MAX 0.5'             # Max. source ellipticity
-	opt9= ' -PROJECTION_TYPE TPV'			 # SAME, TPV or TAN
-	opt10=' -ASTREF_CATLOG GAIA-DR3'        #   NONE,FILE,USNO-A2,USNO-B1,GSC-2.3,
-	                                       # TYCHO-2,UCAC-4,URAT-1,NOMAD-1,PPMX,
-	                                       # CMC-15,2MASS,DENIS-3,SDSS-R9,SDSS-R12,
-	                                       # IGSL,GAIA-DR1,GAIA-DR2,PANSTARRS-1,
-	                                       # or ALLWISE
-
+	opt9= ' -PROJECTION_TYPE TPV '			 # SAME, TPV or TAN
+	opt10=' -ASTREF_CATLOG GAIA-DR3 '
 	scampcom='scamp -c '+scampconfig+' '+iname+'.ldac'+' -ASTREF_CATLOG 2MASS'
 	scampcom='scamp -c '+scampconfig+' '+iname+'.ldac'+' -ASTREF_CATLOG GAIA-DR2 -SAVE_REFCATALOG Y'
-	scampcom='scamp -c '+scampconfig+' '+iname+'.ldac'+' -ASTREF_CATLOG GAIA-DR3'+ opt9 # TPV projection
-
-
+	scampcom='scamp -c '+scampconfig+' '+iname+'.ldac'+' -ASTREF_CATLOG GAIA-DR3'+ opt9 +opt10# TPV projection
 	scampout=subprocess.getoutput(scampcom)
 	line1=[s for s in scampout.split('\n') if 'cont.' in s]
 	contnum = scampout.split(line1[0])[1].split('\n')[1].split(' ')[11]
@@ -99,7 +92,6 @@ def headmerge(i):
 	ff=open(iname+'.head','w')
 	ff.writelines(newhead)
 	ff.close()
-
 	for m in range(len(hdr)):
 		if hdr[m] == '--Start of Astrometry.net WCS solution--':
 			n=m

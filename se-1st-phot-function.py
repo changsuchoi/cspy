@@ -67,9 +67,6 @@ def fwhm_img(im,mtbl1):
 	puthdr(im, 'FWHM_PIX', round(fwhm_img[0],3), hdrcomment='FWHM PIXEL VALUE')
 	return round(fwhm_img[0],3)
 
-
-
-
 def find_opt_aper(im):
 	skymed, skysig=segrowthcom(im)
 	fn=os.path.splitext(im)[0]
@@ -138,14 +135,14 @@ growthparam = 'growth.param'
 seconv      ='default.conv'
 sennw       ='default.nnw'
 DETECT_MINAREA = str(5)
-DETECT_THRESH  = str(5)
+DETECT_THRESH  = str(3)
 DEBLEND_NTHRESH = str(32)
 DEBLEND_MINCONT = str(0.005)
 
 
 # source extractor command
 
-def secom(im,psf=True):
+def secom(im,psf=False):
     #PSCALE=fits.getheader(i)['PSCALE']
 	PSCALE=pixelscale(im)
 	skyval, skysig,fwhm,opt_ap=find_opt_aper(im)
@@ -161,22 +158,23 @@ def secom(im,psf=True):
 	opt2=' -FILTER_NAME '+seconfigdir+seconv +' -STARNNW_NAME '+seconfigdir+sennw
 	opt3=' -DETECT_MINAREA '+ DETECT_MINAREA + ' -DETECT_THRESH '+DETECT_THRESH
 	opt4=' -DEBLEND_NTHRESH '+ DEBLEND_NTHRESH +' -DEBLEND_MINCONT '+ DEBLEND_MINCONT
-	opt5a=' -CHECKIMAGE_TYPE SEGMENTATION,APERTURES ' +\
+	opt5=' -CHECKIMAGE_TYPE SEGMENTATION,APERTURES ' +\
 	 		' -CHECKIMAGE_NAME '+fn+'_seg.fits'+','+fn+'_ap.fits'
 	opt5=' -CHECKIMAGE_TYPE NONE '
 	opt6=' -PHOT_APERTURES '+aper_input+' '
 	opt7=' -PSF_NAME '+fn+'.psf '
 	opt8=' -PIXEL_SCALE '+str(PSCALE)+' '
+	opt9=' -SEEING_FWHM '+str(round(PSCALE*fwhm,3))+' '
 	if psf==True:
-		secommand= 'sex -c '+opt1+opt2+opt2a+opt3+opt4+opt5+opt6+opt7+opt8 + im
+		secommand= 'sex -c '+opt1+opt2+opt2a+opt3+opt4+opt5+opt6+opt7+opt8+opt9 +im
 	else:
-		secommand= 'sex -c '+opt1+opt2+opt2b+opt3+opt4+opt5+opt6+opt8 + im
+		secommand= 'sex -c '+opt1+opt2+opt2b+opt3+opt4+opt5+opt6+opt8+opt9 +im
 	print(secommand)
-	sexout = subprocess.getoutput(secommand)
-	line = [s for s in sexout.split('\n') if 'RMS' in s]
-	skymed, skysig = float(line[0].split('Background:')[1].split('RMS:')[0]), float(line[0].split('RMS:')[1].split('/')[0])
+	#sexout = subprocess.getoutput(secommand)
+	#line = [s for s in sexout.split('\n') if 'RMS' in s]
+	#skymed, skysig = float(line[0].split('Background:')[1].split('RMS:')[0]), float(line[0].split('RMS:')[1].split('/')[0])
 	os.system(secommand)
-	return skymed, skysig
+	return skyval, skysig
 
 #macthing
 def matching(intbl, reftbl, inra, indec, refra, refdec, sep=2.0):
@@ -220,7 +218,10 @@ def starcut(mtbl,lowmag=14,highmag=19,filname='R',magtype='MAG_AUTO'):
 	return mtbl[idx]
 
 #zp calculation
-magtypes=['MAG_AUTO', 'MAG_PSF', 'MAG_APER','MAG_APER_1','MAG_APER_2','MAG_APER_3']
+magtypes=['MAG_AUTO', 'MAG_PSF',
+		'MAG_APER','MAG_APER_1','MAG_APER_2',
+		'MAG_APER_3','MAG_APER_4','MAG_APER_5','MAG_APER_6','MAG_APER_7',
+		'MAG_APER_8']
 
 def zpcal(mtbl1,filname, magtype):
     zp=mtbl1[filname]-mtbl1[magtype]
@@ -246,6 +247,15 @@ def fwhm_img(im,mtbl1):
 	puthdr(im, 'FWHM_PIX', round(fwhm_img[0],3), hdrcomment='FWHM PIXEL VALUE')
 	return fwhm_img[0]
 
+'''
+def fwhm_wcs(mtbl1):
+	fwhm_wcs=sigma_clipped_stats(mtbl1['FWHM_WORLD'], sigma=3, maxiters=10)
+	filtered_data=sigma_clip(mtbl1['FWHM_WORLD'],sigma=3,maxiters=10)
+	selected, nonselected= ~filtered_data.mask, filtered_data.mask
+	print('FWHM_WORLD','{},'.format(round(fwhm_wcs[0]*3600,3)),
+		len(mtbl1[selected]),'stars from',len(mtbl1))
+	return fwhm_wcs[0]*3600
+'''
 # 5sigma detection limit estimate for MAG_AUTO, MAG_PSF
 # error fitting polinomial
 def UL_5sig_err(im,setbl,mtbl,mtbl1,magtype,zp2):
@@ -283,16 +293,7 @@ def UL_5sig_err(im,setbl,mtbl,mtbl1,magtype,zp2):
 	return round((xp[idx_min]+zp2[0])[0],3)
 
 
-'''
-def fwhm_wcs(mtbl1):
-	fwhm_wcs=sigma_clipped_stats(mtbl1['FWHM_WORLD'], sigma=3, maxiters=10)
-	filtered_data=sigma_clip(mtbl1['FWHM_WORLD'],sigma=3,maxiters=10)
-	selected, nonselected= ~filtered_data.mask, filtered_data.mask
-	print('FWHM_WORLD','{},'.format(round(fwhm_wcs[0]*3600,3)),
-		len(mtbl1[selected]),'stars from',len(mtbl1))
-	return fwhm_wcs[0]*3600
-'''
-def zp_plot(mtbl1, zp2, selected, magtype, im, filname='R', filerr='Rerr'):
+def zp_plot(mtbl1, zp2, selected, magtype, im, filname=filname, filerr=filerr):
 	fn=os.path.splitext(im)[0]
 	zp=mtbl1[filname]-mtbl1[magtype]
 	xr=np.linspace(np.min(mtbl1[filname]), np.max(mtbl1[filname]), len(zp))
@@ -336,7 +337,6 @@ def fitplot(im, mtbl1, magtype, selected):
 	ax=plt.subplot(projection=wcs)
 	ax.set_xlabel('RA')
 	ax.set_ylabel('DEC')
-
 	#ax.invert_xaxis()
 	ax.set_title(im+' '+magtype)
 	ax.scatter(mtbl1[selected]['ALPHA_J2000'],mtbl1[selected]['DELTA_J2000'],
