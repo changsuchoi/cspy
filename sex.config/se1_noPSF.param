@@ -11,10 +11,10 @@ FLUXERR_AUTO             RMS error for AUTO flux                                
 #MAGERR_PSF
 #FLUX_PSF                 Flux from PSF-fitting                                     [count]
 #FLUXERR_PSF              RMS flux error for PSF-fitting                            [count]
-MAG_APER(3)              #   Fixed aperture magnitude vector                           [mag]
-MAGERR_APER(3)           #
-FLUX_APER(3)             #   Flux vector within fixed circular aperture(s)             [count]
-FLUXERR_APER(3)          #   RMS error vector for aperture flux(es)                    [count]
+MAG_APER(9)              #   Fixed aperture magnitude vector                           [mag]
+MAGERR_APER(9)           #
+FLUX_APER(9)             #   Flux vector within fixed circular aperture(s)             [count]
+FLUXERR_APER(9)          #   RMS error vector for aperture flux(es)                    [count]
 SNR_WIN                  Gaussian-weighted SNR   
 BACKGROUND               Background at centroid position                           [count]
 THRESHOLD                Detection threshold above background                      [count]

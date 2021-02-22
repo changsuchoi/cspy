@@ -108,7 +108,7 @@ def find_opt_aper(im):
 		plt.plot(aper[p],np.mean(mcat['FLUX_APER_'+str(p)]/mcat['FLUXERR_APER_'+str(p)]),'bo')
 	# plt.plot(np.ones(len(mcat))*0,mcat['FLUX_PSF']/mcat['FLUXERR_PSF'],'ro')
 	# mcat['FLUX_AUTO']/mcat['FLUXERR_AUTO']
-	plt.vlines(fwhm*1.5, 0,10000)
+	# plt.vlines(fwhm*1.5, 0,10000)
 	# curve fitting
 	snrval=[0]
 	snrval[0]=np.mean(mcat['FLUX_APER']/mcat['FLUXERR_APER'])
@@ -139,6 +139,6 @@ def opt_ap_fwhm(im):
 		hdrcomment='sky median value form sextractor')
 	puthdr(im, 'SKYSIG', skysig,
 		hdrcomment='sky sigma value form sextractor')
-	puthdr(im, 'FWHM_PIX', fwhm, hdrcomment='FWHM PIXEL VALUE')
+	puthdr(im, 'FWHM_PIX', round(fwhm,3), hdrcomment='FWHM PIXEL VALUE')
 	puthdr(im, 'OPT_AP', opt_ap, hdrcomment='Optimal aperture size')
 	return skyval, skysig,fwhm,opt_ap

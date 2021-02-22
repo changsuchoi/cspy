@@ -11,33 +11,33 @@ import glob
 import os,sys
 from multiprocessing import Process, Pool
 
-os.system('rm wr*.fits')
+#os.system('rm wr*.fits')
 
-instr  = sys.argv[1]
-inlist = glob.glob(instr).sort()
-refim  = sys.argv[2] # ref.fits
+#instr  = sys.argv[1]
+#inlist = glob.glob(instr).sort()
+#refim  = sys.argv[2] # ref.fits
 
-inlist=glob.glob('Calib*.fits')
-refim='ref.fits'
+#inlist=glob.glob('Calib*.fits')
+#refim='ref.fits'
 
 
-def wcsremap(inim,refim):
+def wcsremap(im,refim='ref.fits'):
 	#print inim
-	outim='ref'+inim
-	wcsremapstr='wcsremap -template '+refim+' -source '+inim+' -outIm '+outim
+	outim='regw_'+im
+	wcsremapstr='wcsremap -template '+refim+' -source '+im+' -outIm '+outim
     # match to ref image
-	wcsremapstr='wcsremap -template '+inim+' -source '+refim+' -outIm '+outim	
+	wcsremapstr='wcsremap -template '+im+' -source '+refim+' -outIm '+outim
     # match to input image
 	os.system(wcsremapstr)
 	print (outim)
 
 
 
-for inim in inlist : 
-	wcsremap(inim,refim)
+for inim in inlist :
+	wcsremap(im,refim='ref.fits')
 
 '''
-if __name__ == '__main__' : 
+if __name__ == '__main__' :
 	p=Pool(2)
 	p.map(wcsremap,inlist)
 

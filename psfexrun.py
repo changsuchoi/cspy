@@ -22,7 +22,7 @@ from astropy.nddata import Cutout2D
 # inlist=list(inlist)
 # os.system("cp /data0/code/psfex.config/* .")
 
-configdir="/data7/cschoi/code/psfex.config/"
+configdir="/data7/cschoi/code/cspy/psfex.config/"
 #configdir='/home/changsu/code/psfex.config/'
 def psfexxml(xmlfile):
 	votable=parse(xmlfile)
