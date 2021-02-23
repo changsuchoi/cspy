@@ -14,11 +14,13 @@ import astropy.io.fits as fits
 import glob
 import astropy.io.ascii as ascii
 import subprocess
+from multiprocessing import Process,Pool
+
 
 astcodedirec   = '/data7/cschoi/code/cspy/astrom/astromtest/'
-astseconfig    = codedirec+'astrom.sex'
-astseparam     = codedirec+'astrom.par'
-astscampconfig = codedirec+'astrom.scamp'
+astseconfig    = astcodedirec+'astrom.sex'
+astseparam     = astcodedirec+'astrom.par'
+astscampconfig = astcodedirec+'astrom.scamp'
 
 # input file name
 #i = 'Calibrated-LOAO-NGC3367-20180707-034519-R-60.fits'
@@ -139,7 +141,10 @@ salist=glob.glob('saCalib*.fits')
 salist.sort()
 print ('from oklist', len(oklist), 'salist',len(salist))
 
-
+cpunum=4
+if __name__ == '__main__' :
+	p=Pool(cpunum)
+	p.map(scamp_astrometry_net,oklist)
 #f.close()
 #hdr1.fromTxtFile('astromtest.head')
 #hdr1.extend(fits.Header.fromtextfile(iname+'.head'), update=True, update_first=True)

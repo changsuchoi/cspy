@@ -1,13 +1,13 @@
 import os
 import glob
+import astropy.io.fits as fits
+
 
 def calibfitslist(caliblist):
     oklist,nolist=[],[]
     currentdir=os.getcwd()
     currentdir_split=currentdir.split('/')
     for i, j in enumerate(caliblist):
-
-
         # sample='Calib-DOAO-NGC3367-20180330-111526-B-60.fits'
         # print(i,j)
         filename = j.split('.')
@@ -31,10 +31,15 @@ def calibfitslist(caliblist):
         if len(components[4]) != 6 :
             print(i,j,'Time value is strange')
             nolist.append(j)
+        if  'DATE-OBS' not in list(fits.getheader(j).keys()):
+            print('DATE-OBS keyword missing.')
+        if  'EXPTIME' not in list(fits.getheader(j).keys()):
+            print('EXPTIME keyword missing.')
         else: oklist.append(j)
     return oklist, nolist
 
-
+#hdr.get('DATEOBS',default=False)
+#list(hdr.keys())
 caliblist=glob.glob("Calib*.fits")
 oklist, nolist=calibfitslist(caliblist)
 oklist.sort()

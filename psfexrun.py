@@ -54,7 +54,9 @@ def imcopy(inim,outname):
 def psfex(i):
 	arcsec5 = str(round(5 / pixelscale(i),2))
 	fn=os.path.splitext(i)[0]
-	presecom = 'sex -c '+configdir+'prepsfex.sex '+i+' -CATALOG_NAME '+fn+'.cat -PARAMETERS_NAME '+configdir+'prepsfex.param '+ '-FILTER_NAME '+configdir+'default.conv' + ' -PHOT_APERTURES '+arcsec5
+	presecom = 'sex -c '+configdir+'prepsfex.sex '+i+\
+			' -CATALOG_NAME '+fn+'.cat -PARAMETERS_NAME '+configdir+'prepsfex.param '+\
+			'-FILTER_NAME '+configdir+'default.conv' + ' -PHOT_APERTURES '+arcsec5
 	opt1 = ' -SAMPLE_FWHMRANGE 1.0,30.0 -SAMPLE_VARIABILITY 0.5 -SAMPLE_MINSN 5 -SAMPLE_MAXELLIP 1.0 '
 	#opt2 = ' -CHECKPLOT_DEV PNG -CHECKPLOT_TYPE FWHM,ELLIPTICITY,COUNTS, COUNT_FRACTION, CHI2, RESIDUALS '
 	#opt3 = ' -CHECKPLOT_NAME fwhm, ellipticity, counts, countfrac, chi2, resi '
