@@ -228,14 +228,7 @@ def secom_final(im,psf=False):
 	#skymed, skysig = float(line[0].split('Background:')[1].split('RMS:')[0]), float(line[0].split('RMS:')[1].split('/')[0])
 	os.system(secommand)
 
-sefcat=ascii.read(fn+'.sef')
-from astropy.table import Table
-from astropy import units as u
-from astropy.table import Column
-sefcat['MAG_AUTO']=sefcat['MAG_AUTO']+hdr['zp_AUTO']
-sefcat['MAGERR_AUTO']=np.sqrt(sefcat['MAGERR_AUTO']**2 + hdr['ZPE_AUTO']**2)
-sefcat['MAG_a']=sefcat['MAG_AUTO']+hdr['zp_AUTO']
-sefcat['MAGERR_AUTO']=np.sqrt(sefcat['MAGERR_AUTO']**2 + hdr['ZPE_AUTO']**2)
+
 '''
 imlist=glob.glob('Calib*.fits')+\
 		glob.glob('saCalib*.fits')+\

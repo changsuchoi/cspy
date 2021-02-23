@@ -24,14 +24,16 @@ from multiprocessing import Process, Pool
 def wcsremap(im,refim='ref.fits'):
 	#print inim
 	outim='regw_'+im
-	if os.path.isfile(outim):pass
+	if os.path.isfile(outim):
+		print(outim,'exist, Pass')
+		pass
 	else:
-		#wcsremapstr='wcsremap -template '+refim+' -source '+im+' -outIm '+outim -v
+		#wcsremapstr='wcsremap -template '+refim+' -source '+im+' -outIm '+outim
     	# match to ref image
-		wcsremapstr='wcsremap -template '+im+' -source '+refim+' -outIm '+outim -v
+		wcsremapstr='wcsremap -template '+im+' -source '+refim+' -outIm '+outim
     	# match to input image
 		os.system(wcsremapstr)
-		print (outim)
+		print (outim,'is created')
 
 
 

@@ -15,10 +15,10 @@ import glob
 import astropy.io.ascii as ascii
 import subprocess
 
-codedirec   = '/data7/cschoi/code/cspy/astrom/astromtest/'
-seconfig    = codedirec+'astrom.sex'
-separam     = codedirec+'astrom.par'
-scampconfig = codedirec+'astrom.scamp'
+astcodedirec   = '/data7/cschoi/code/cspy/astrom/astromtest/'
+astseconfig    = codedirec+'astrom.sex'
+astseparam     = codedirec+'astrom.par'
+astscampconfig = codedirec+'astrom.scamp'
 
 # input file name
 #i = 'Calibrated-LOAO-NGC3367-20180707-034519-R-60.fits'
@@ -30,13 +30,13 @@ scampconfig = codedirec+'astrom.scamp'
 #imlist.sort()
 #for img in imlist: print(img)
 
-def scamp_net(i):
+def scamp_net(i,projection='TAN'):
 	newname='sa'+i
 	print('='*60, '\n')
 	os.system('cp '+i+' '+newname)
 	iname = i.split('.')[0]
 	# source extractor
-	secom = 'sex '+i+' -c '+seconfig+' -PARAMETERS_NAME '+separam+' -CATALOG_NAME '+iname+'.ldac'
+	secom = 'sex '+i+' -c '+astseconfig+' -PARAMETERS_NAME '+astseparam+' -CATALOG_NAME '+iname+'.ldac'
 	seout = subprocess.getoutput(secom)
 
 	line1 = [s for s in seout.split('\n') if 'RMS' in s]
@@ -57,11 +57,12 @@ def scamp_net(i):
 	opt6= ' -SN_THRESHOLDS 10.0,100.0'      # S/N thresholds (in sigmas) for all and high-SN sample
 	opt7= ' -FWHM_THRESHOLDS 0.0,100.0'       # FWHM thresholds (in pixels) for sources
 	opt8= ' -ELLIPTICITY_MAX 0.5'             # Max. source ellipticity
-	opt9= ' -PROJECTION_TYPE TPV '			 # SAME, TPV or TAN
-	opt10=' -ASTREF_CATLOG GAIA-DR3 '
-	scampcom='scamp -c '+scampconfig+' '+iname+'.ldac'+' -ASTREF_CATLOG 2MASS'
-	scampcom='scamp -c '+scampconfig+' '+iname+'.ldac'+' -ASTREF_CATLOG GAIA-DR2 -SAVE_REFCATALOG Y'
-	scampcom='scamp -c '+scampconfig+' '+iname+'.ldac'+' -ASTREF_CATLOG GAIA-DR3'+ opt9 +opt10# TPV projection
+	opt9= ' -PROJECTION_TYPE '+projection+' '			 # SAME, TPV or TAN
+	opt10=' -ASTREF_CATLOG GAIA-EDR3 '
+	scampcom='scamp -c '+astscampconfig+' '+iname+'.ldac'+' -ASTREF_CATLOG 2MASS'
+	scampcom='scamp -c '+astscampconfig+' '+iname+'.ldac'+' -ASTREF_CATLOG GAIA-DR2 -SAVE_REFCATALOG Y'
+	scampcom='scamp -c '+astscampconfig+' '+iname+'.ldac'+' -ASTREF_CATLOG GAIA-EDR3'+ opt9 # TPV projection
+	print(scampcom)
 	scampout=subprocess.getoutput(scampcom)
 	line1=[s for s in scampout.split('\n') if 'cont.' in s]
 	contnum = scampout.split(line1[0])[1].split('\n')[1].split(' ')[11]
@@ -121,9 +122,14 @@ fits.writeto('a'+inim,fits.getdata(inim),hdr1)
 #f=open('scamp_net_result.txt','w')
 # scamp_net(iii)
 # headmerge(iii)
+def scamp_astrometry_net(im,projection='TAN'):
+	contnum=scamp_net(im,projection=projection)
+	headmerge(im)
+	fits.setval('sa'+im, 'FLXSCALE', value=1)
+	fits.setval('sa'+im, 'SCAMPCON', value=contnum, hdrcomment='SCAMP cont. num')
 
 for i in range(len(oklist)) :
-	contnum=scamp_net(oklist[i])
+	contnum=scamp_net(oklist[i],projection='TAN')
 	headmerge(oklist[i])
 	fits.setval('sa'+oklist[i], 'FLXSCALE', value=1)
 	fits.setval('sa'+oklist[i], 'SCAMPCON', value=contnum, hdrcomment='SCAMP cont. num')

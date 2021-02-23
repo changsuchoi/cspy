@@ -29,9 +29,9 @@ def hotpantsrun(im, regrefim, il=0, iu=65000, tl=0, tu=65000, sigmatch=False):
 	fwhm_im=fits.getheader(im)['FWHM_PIX']
 	fwhm_reg=fits.getheader(regrefim)['FWHM_PIX']
 	#com= 'hotpants -v 0 -inim '+regrefim+' -tmplim '+im+\
-		' -outim '+outfile+opt0 +' -oci '+convfile +opt1+opt2+opt3+opt4+opt5
+	#	' -outim '+outfile+opt0 +' -oci '+convfile +opt1+opt2+opt3+opt4+opt5
 	com= 'hotpants -v 0 -inim '+im+' -tmplim '+regrefim+\
-		' -outim '+outfile+opt0a +' -oci '+convfile +opt1+opt2+opt3+opt4+opt5
+		' -outim '+outfile + opt0a +' -oci '+ convfile +opt1+opt2+opt3+opt4
 	print(com)
 	os.system(com)
 	#if fwhm_im > fwhm_reg :

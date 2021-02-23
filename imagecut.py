@@ -17,36 +17,62 @@ import os,sys
 import glob
 
 
-im=sys.argv[1]
-infile=sorted(glob.glob(im))
+#im=sys.argv[1]
+#infile=sorted(glob.glob(im))
 #size=sys.argv[2] # arcmin
 # input
 #im=  'test.fits'
-ra, dec = 308.71805, 60.15368 #NGC6946
-ra, dec = 178.20602, 44.12025
-ra, dec = 161.64562673, 13.75085444
+#ra, dec = 308.71805, 60.15368 #NGC6946
+#ra, dec = 178.20602, 44.12025
+#ra, dec = 161.64562673, 13.75085444
 #ra, dec = 14.95871, -07.57796
 #197.44879, -23.38383, #'13:09:47.71', '-23:23:01.8' # NGC4993 center coordinates J2000 deg unit
 #ra, dec = 197.47311, -23.368377
-size = 120 # arcmin unit, length of square side
-
-def imcopy(inim,size):
-	hdr= fits.getheader(inim)
+size = 10 # arcmin unit, length of square side
+ra,dec=161.645641, 13.750859
+def imcopy(im,size=10,ra=False,dec=False):
+	hdr= fits.getheader(im)
 	w = WCS(hdr)
-	px, py = w.wcs_world2pix(ra, dec, 1)
-	print ('center pixel coordinates', int(px), int(py) )
-	xpscale,ypscale=wcsutils.proj_plane_pixel_scales(w)*60 # pixel scale armin unit
+	xpscale,ypscale=wcsutils.proj_plane_pixel_scales(w)*60
 	pixscale=(xpscale+ypscale)/2.
-
-	ax,bx=px-size/2/pixscale,px+size/2/pixscale
-	ay,by=py-size/2/pixscale,py+size/2/pixscale
-	print ('pixel scale =', '%.3f'% (pixscale*60), size, 'arcmin rectangular cut =',int(bx - ax),'pixels')
+	if (ra==False) or (dec==False) :
+		print('RA or DEC input, False, position will be center of',im)
+		px, py= hdr['NAXIS1']/2., hdr['NAXIS2']/2.
+		ax,bx=px-size/2/pixscale,px+size/2/pixscale
+		ay,by=py-size/2/pixscale,py+size/2/pixscale
+	else:
+		px, py = w.wcs_world2pix(ra, dec, 1)
+		print ('center pixel coordinates', int(px), int(py) )
+		ax,bx=px-size/2/pixscale,px+size/2/pixscale
+		ay,by=py-size/2/pixscale,py+size/2/pixscale
+	print ('pixel scale =', '%.3f'% (pixscale*60), size,
+			'arcmin rectangular cut =',int(bx - ax),'pixels')
 	region='['+str(int(ax))+':'+str(int(bx))+','+str(int(ay))+':'+str(int(by))+']'
-	outname=inim[:-5]+'-'+str(size)+'-arcmin-cut.fits'
+	outname=os.path.splitext(im)[0]+'_'+str(size)+'min_cut.fits'
 	print (outname,'will be created')
 	#region='[200:2048,60:2048]'
-	chinim=inim+region
+	chinim=im+region
 	iraf.imcopy(chinim,output=outname)
+
+def radec_center(im):
+	from astropy.wcs import WCS
+	from astropy.coordinates import SkyCoord
+	from astropy.coordinates import ICRS, Galactic, FK4, FK5
+	from astropy.coordinates import Angle, Latitude, Longitude
+	from astropy.io import fits
+	import astropy.units as u
+	import astropy.coordinates as coord
+	import numpy as np
+	hdr = fits.getheader(im)
+	#	RA, Dec center for reference catalog query
+	xcent, ycent= hdr['NAXIS1']/2., hdr['NAXIS2']/2.
+	w = WCS(im)
+	racent, deccent = w.all_pix2world(xcent, ycent, 1)
+	c=SkyCoord(racent,deccent,unit="deg")
+	rastr=c.ra.to_string(unit=u.hourangle,sep=':')
+	decstr=c.dec.to_string(unit=u.deg,sep=':')
+	racent, deccent = racent.item(), deccent.item()
+	return rastr,decstr,racent,deccent
 
 def xyimcopy(inim,sizex,sizey):
 	hdr= fits.getheader(inim)
@@ -139,11 +165,3 @@ if __name__ == '__main__':
     size = (400, 400)
     download_image_save_cutout(url, position, size)
 '''
-
-
-#imcopy(im,size)
-
-
-#for i in infile : imcopy(i,size)
-
-print 'done.\n'

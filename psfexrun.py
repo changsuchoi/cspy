@@ -65,7 +65,7 @@ def psfex(i):
 	opt5 = ' -CHECKIMAGE_NAME snap '
 	#+fn+'.psfex_chi.fits '+fn+'.psfex_proto.fits '+fn+'.psfex_sample.fits '+fn+'.psfex_resi.fits '+fn+'.psfex_snap.fits '
 	opt6 = ' -XML_NAME '+fn+'.psfex.xml '
-	psfexcom = 'psfex -c '+configdir+'default.psfex '+fn+'.cat'+opt1+opt6
+	psfexcom = 'psfex -c '+configdir+'default.psfex '+fn+'.cat'+opt1+opt6+opt4
 	os.system(presecom)
 	os.system(psfexcom)
 	print (i, ' fwhm value is ', psfexxml(fn+'.psfex.xml'))
