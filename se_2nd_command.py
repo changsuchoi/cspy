@@ -1,7 +1,5 @@
 # im='Calib-LOAO-NGC3367-20131023-123229-R-60.fits'
 
-filname,filerr='R','Rerr'
-
 def se1st(im):
 	fn=os.path.splitext(im)[0]
 	# se 1st

@@ -124,7 +124,7 @@ fits.writeto('a'+inim,fits.getdata(inim),hdr1)
 #f=open('scamp_net_result.txt','w')
 # scamp_net(iii)
 # headmerge(iii)
-def scamp_astrometry_net(im,projection='TAN'):
+def scamp_astrometry_net(im,projection='TPV'):
 	contnum=scamp_net(im,projection=projection)
 	headmerge(im)
 	fits.setval('sa'+im, 'FLXSCALE', value=1)

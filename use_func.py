@@ -98,3 +98,21 @@ duration= endtime-starttime
 starttime=time.time();
 ls saCalib* | wc -l
 endtime=time.time();os.system('ls saCalib* | wc -l')
+
+
+# header check
+
+import astropy.io.fits as fits
+import numpy as np
+
+keyword='EXPTIME'
+for im in salist:
+	hdr=fits.getheader(im)
+	#hdr.get(keyword,default=False)
+	if keyword not in list(hdr.keys()):
+		hdrval=hdr['EXP_TIME']
+		print('header update',keyword,hdrval)
+		puthdr(im, keyword, hdrval, hdrcomment='')
+
+keyword = 'DATE-OBS'
+ 

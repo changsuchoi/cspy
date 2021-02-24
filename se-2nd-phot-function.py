@@ -11,6 +11,7 @@ from astropy.stats import sigma_clipped_stats
 from astropy.stats import sigma_clipping
 import matplotlib.pyplot as plt
 import seaborn as sns
+from multiprocessing import Process,Pool
 
 
 # input files, config and params
@@ -25,8 +26,9 @@ DETECT_THRESH  = str(1.5)
 DEBLEND_NTHRESH = str(32)
 DEBLEND_MINCONT = str(0.005)
 
+psf=False
 # source extractor command
-def se2com(im,psf=False):
+def se2com(im,psf=psf):
 	PSCALE=fits.getheader(im)['PSCALE']
 	fwhm_pix=fits.getheader(im)['FWHM_PIX']
 	opt_ap=fits.getheader(im)['OPT_AP']

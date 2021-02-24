@@ -135,7 +135,7 @@ def find_opt_aper(im):
 # first maximum
 def opt_ap_fwhm(im):
 	skyval, skysig,fwhm,opt_ap=find_opt_aper(im)
-	puthdr(im, 'SKYVAL', skymed,
+	puthdr(im, 'SKYVAL', skyval,
 		hdrcomment='sky median value form sextractor')
 	puthdr(im, 'SKYSIG', skysig,
 		hdrcomment='sky sigma value form sextractor')

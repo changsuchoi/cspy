@@ -103,10 +103,36 @@ def swarpregister(im,refim='ref.fits'):
 			opt6+opt7+opt8+opt9+opt10+\
 			opt11+opt12+opt13+opt14+opt15
 	print(swarpcom)
-
 	os.system(swarpcom)
 
-
+def swarp_single(im):
+	rahms,decdms,rac,dec=radec_center(im)
+	PSCALE=fits.getheader(im)['PSCALE']
+	inputs=' '+refim+' '
+	outname='regs_'+im
+	swarpcom0='swarp -c default.swarp '
+	opt1=' -IMAGEOUT_NAME '+ outname+' '
+	opt2=' -COMBINE N '
+	opt3=' -CELESTIAL_TYPE NATIVE '    # NATIVE, PIXEL, EQUATORIAL,
+                                       # GALACTIC,ECLIPTIC, or SUPERGALACTIC
+	opt4=' -PROJECTION_TYPE TAN '      # Any WCS projection code or NONE
+	opt5=' -PROJECTION_ERR 0.001 '     # Maximum projection error (in output
+                                       # pixels), or 0 for no approximation
+	opt6=' -CENTER_TYPE MANUAL '          # MANUAL, ALL or MOST
+	opt7=' -CENTER '+rahms+','+decdms+' ' # Coordinates of the image center
+	opt8=' -PIXELSCALE_TYPE MANUAL '      # MANUAL,FIT,MIN,MAX or MEDIAN
+	opt9=' -PIXEL_SCALE '+str(PSCALE)+' ' # Pixel scale
+	opt10=' -IMAGE_SIZE 0 '               # Image size (0 = AUTOMATIC)
+	opt11=' -RESAMPLE Y '
+	opt12=' -SUBTRACT_BACK N '
+	opt13=' -DELETE_TMPFILES N '
+	opt14=' -COPY_KEYWORDS OBJECT '
+	opt15=' -WRITE_FILEINFO Y '
+	swarpcom=swarpcom0+inputs+opt1+opt2+opt3+opt4+opt5+\
+			opt6+opt7+opt8+opt9+opt10+\
+			opt11+opt12+opt13+opt14+opt15
+	print(swarpcom)
+	os.system(swarpcom)
 
 
 

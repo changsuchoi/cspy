@@ -12,7 +12,7 @@ from astropy.time import Time
 import matplotlib.pyplot as plt
 from pyraf import iraf
 from astropy.nddata import Cutout2D
-
+from multiprocessing import Process,Pool
 
 
 #os.system("rm psf*.fits *.psf *.xml")
@@ -22,7 +22,7 @@ from astropy.nddata import Cutout2D
 # inlist=list(inlist)
 # os.system("cp /data0/code/psfex.config/* .")
 
-configdir="/data7/cschoi/code/cspy/psfex.config/"
+psfexconfigdir="/data7/cschoi/code/cspy/psfex.config/"
 #configdir='/home/changsu/code/psfex.config/'
 def psfexxml(xmlfile):
 	votable=parse(xmlfile)
@@ -54,9 +54,9 @@ def imcopy(inim,outname):
 def psfex(i):
 	arcsec5 = str(round(5 / pixelscale(i),2))
 	fn=os.path.splitext(i)[0]
-	presecom = 'sex -c '+configdir+'prepsfex.sex '+i+\
-			' -CATALOG_NAME '+fn+'.cat -PARAMETERS_NAME '+configdir+'prepsfex.param '+\
-			'-FILTER_NAME '+configdir+'default.conv' + ' -PHOT_APERTURES '+arcsec5
+	presecom = 'sex -c '+psfexconfigdir+'prepsfex.sex '+i+\
+			' -CATALOG_NAME '+fn+'.cat -PARAMETERS_NAME '+psfexconfigdir+'prepsfex.param '+\
+			'-FILTER_NAME '+psfexconfigdir+'default.conv' + ' -PHOT_APERTURES '+arcsec5
 	opt1 = ' -SAMPLE_FWHMRANGE 1.0,30.0 -SAMPLE_VARIABILITY 0.5 -SAMPLE_MINSN 5 -SAMPLE_MAXELLIP 1.0 '
 	#opt2 = ' -CHECKPLOT_DEV PNG -CHECKPLOT_TYPE FWHM,ELLIPTICITY,COUNTS, COUNT_FRACTION, CHI2, RESIDUALS '
 	#opt3 = ' -CHECKPLOT_NAME fwhm, ellipticity, counts, countfrac, chi2, resi '
@@ -67,13 +67,19 @@ def psfex(i):
 	opt5 = ' -CHECKIMAGE_NAME snap '
 	#+fn+'.psfex_chi.fits '+fn+'.psfex_proto.fits '+fn+'.psfex_sample.fits '+fn+'.psfex_resi.fits '+fn+'.psfex_snap.fits '
 	opt6 = ' -XML_NAME '+fn+'.psfex.xml '
-	psfexcom = 'psfex -c '+configdir+'default.psfex '+fn+'.cat'+opt1+opt6+opt4
+	psfexcom = 'psfex -c '+psfexconfigdir+'default.psfex '+fn+'.cat'+opt1+opt6+opt4
 	os.system(presecom)
 	os.system(psfexcom)
 	print (i, ' fwhm value is ', psfexxml(fn+'.psfex.xml'))
 	#imcopy('snap_'+i,'psf-'+i)
 	#imcopycom='imcopy snap_'+i+'[100:125,100:125] psf-'+i
 	#os.system(imcopycom)
+
+def psfexrun(im):
+	print('='*60,'\n')
+	if os.path.isfile(os.path.splitext(im)[0]+'.psf') : pass
+	else: psfex(im)
+	os.system('rm *psfex.xml')
 
 inlist=glob.glob("*Calib*.fits")
 inlist.sort()
@@ -84,7 +90,9 @@ for j,inimage in enumerate(inlist) :
 	if os.path.isfile(os.path.splitext(inimage)[0]+'.psf') : pass
 	else: psfex(inimage)
 
-os.system('rm snap_*.fits,*.xml')
+
+
+os.system('rm *psfex.xml')
 
 
 print ('all done')

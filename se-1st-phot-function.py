@@ -11,7 +11,9 @@ from astropy.stats import sigma_clipped_stats
 from astropy.stats import sigma_clipping
 import matplotlib.pyplot as plt
 import seaborn as sns
+import astropy.io.ascii as ascii
 from scipy.interpolate import UnivariateSpline
+from multiprocessing import Process,Pool
 
 def puthdr(inim, hdrkey, hdrval, hdrcomment=''):
 	from astropy.io import fits
@@ -36,6 +38,7 @@ def fwhm_img(im,mtbl1):
 	print('FWHM_IMAGE','{}'.format(round(fwhm_img[0],3)),
 		len(mtbl1[selected]),'stars from',len(mtbl1))
 	puthdr(im, 'FWHM_PIX', round(fwhm_img[0],3), hdrcomment='FWHM PIXEL VALUE')
+	puthdr(im, 'NUM_FWHM', len(mtbl1[selected]), hdrcomment='Number of stars for FHWM estimate')
 	return round(fwhm_img[0],3)
 
 # input files, config and params
@@ -50,7 +53,7 @@ DETECT_MINAREA = str(5)
 DETECT_THRESH  = str(3)
 DEBLEND_NTHRESH = str(32)
 DEBLEND_MINCONT = str(0.005)
-lowmag=14
+lowmag=13
 highmag=19
 filname,filerr='R','Rerr'
 magtypes=['MAG_AUTO', 'MAG_PSF',
@@ -58,7 +61,7 @@ magtypes=['MAG_AUTO', 'MAG_PSF',
 		'MAG_APER_3','MAG_APER_4','MAG_APER_5','MAG_APER_6','MAG_APER_7',
 		'MAG_APER_8']
 magtype=magtypes[0]
-refcat='../../ps1-Tonry-NGC3367.cat'
+#refcat='../../ps1-Tonry-NGC3367.cat'
 # source extractor command
 
 def secom(im,psf=False):

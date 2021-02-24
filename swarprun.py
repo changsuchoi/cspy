@@ -10,6 +10,7 @@ from pyraf import iraf
 import os, sys
 import numpy as np
 import matplotlib.pyplot as plt
+from multiprocessing import Process,Pool
 
 os.system('swarp -d > default.swarp')
 
@@ -95,7 +96,7 @@ def radec_center(im):
 
 salist=glob.glob('saCalib*.fits')
 salist.sort()
-
+salines=epoch_group(salist)
 #salines[-1][:-1].split(',')
 def swarp_epoch(salines):
 	for i in salines:
