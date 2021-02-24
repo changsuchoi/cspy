@@ -75,7 +75,7 @@ def radec_center(im):
 	racent, deccent = racent.item(), deccent.item()
 	return rastr,decstr,racent,deccent
 
-'''
+
 def swarpregister(im,refim='ref.fits'):
 	rahms,decdms,rac,dec=radec_center(im)
 	PSCALE=fits.getheader(im)['PSCALE']
@@ -99,12 +99,14 @@ def swarpregister(im,refim='ref.fits'):
 	opt13=' -DELETE_TMPFILES N '
 	opt14=' -COPY_KEYWORDS OBJECT '
 	opt15=' -WRITE_FILEINFO Y '
-	swarpcom=swarpcom0+inputs+opt1+opt2+opt3+opt4+opt5+opt6+opt7+opt8+opt9+opt10+opt11+opt12+opt13+opt14+opt15
+	swarpcom=swarpcom0+inputs+opt1+opt2+opt3+opt4+opt5+\
+			opt6+opt7+opt8+opt9+opt10+\
+			opt11+opt12+opt13+opt14+opt15
 	print(swarpcom)
 
 	os.system(swarpcom)
 
-'''
+
 
 
 

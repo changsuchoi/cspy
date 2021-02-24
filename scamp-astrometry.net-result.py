@@ -32,7 +32,7 @@ astscampconfig = astcodedirec+'astrom.scamp'
 #imlist.sort()
 #for img in imlist: print(img)
 
-def scamp_net(i,projection='TAN'):
+def scamp_net(i,projection='TPV'):
 	newname='sa'+i
 	print('='*60, '\n')
 	os.system('cp '+i+' '+newname)
@@ -130,6 +130,7 @@ def scamp_astrometry_net(im,projection='TAN'):
 	fits.setval('sa'+im, 'FLXSCALE', value=1)
 	fits.setval('sa'+im, 'SCAMPCON', value=contnum, hdrcomment='SCAMP cont. num')
 
+'''
 for i in range(len(oklist)) :
 	contnum=scamp_net(oklist[i],projection='TAN')
 	headmerge(oklist[i])
@@ -140,7 +141,7 @@ for i in range(len(oklist)) :
 salist=glob.glob('saCalib*.fits')
 salist.sort()
 print ('from oklist', len(oklist), 'salist',len(salist))
-
+'''
 cpunum=4
 if __name__ == '__main__' :
 	p=Pool(cpunum)

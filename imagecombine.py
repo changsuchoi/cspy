@@ -3,8 +3,8 @@
 # python imagecombine.py 'gre*.fits' median
 # python 3 porting completed, 2019.05.28, Changsu Choi
 
-from astropy.io import ascii
-from astropy.io import fits
+import astropy.io.ascii as ascii
+import astropy.io.fits as fits
 import astropy.units as u
 import astropy.coordinates as coord
 from astropy.table import Table, Column
@@ -13,6 +13,8 @@ from pyraf import iraf
 import os, sys
 import numpy as np
 import matplotlib.pyplot as plt
+import glob
+
 
 # os.system('rm *_com.fits')
 # str1=sys.argv[1]
@@ -38,7 +40,8 @@ def imcombine(group,output):
 	iraf.imcombine(group,output=output)
 '''
 def imcombine(group,output):
-	group=(",".join(group))
+	if type(group) ==list : group=(",".join(group)) # if group datatype is list
+	#else : print(group.split(','))
 	iraf.imcombine(group,output=output,combine=combinestr,
 					project="no",reject="none",scale="none",zero="mode")
 
@@ -88,19 +91,19 @@ glines=epoch_group(glist)
 # alllist=glob.glob('*Calib*.fits')
 # for m in alllist:
 # 		puthdr(m,'EXPTIME', fits.getheader(m)['EXP_TIME'])
-
-for i in glines:
-	ii=i[:-1].split(',')
-	if len(ii)==1 :
-		if os.path.isfile(centertimeheader(ii)[1]) : pass
+def imagecombine_epoch(glines):
+	for i in glines:
+		ii=i[:-1].split(',')
+		if len(ii)==1 : pass
+			#if os.path.isfile(centertimeheader(ii)[1]) : pass
+			#else:
+			#	print("single image")
+			#	os.system('cp '+ii[0]+' '+centertimeheader(ii)[1])
+			#	puthdr(centertimeheader(ii)[1],'DATE-OBS', centertimeheader(ii)[0])
 		else:
-			print("single image")
-			os.system('cp '+ii[0]+' '+centertimeheader(ii)[1])
-			puthdr(centertimeheader(ii)[1],'DATE-OBS', centertimeheader(ii)[0])
-	else:
-		if os.path.isfile(centertimeheader(ii)[1]) : pass
-		else:
-			print(len(ii),'images will be combined', centertimeheader(ii)[1])
-			imcombine(i[:-1], centertimeheader(ii)[1])
-			puthdr(centertimeheader(ii)[1],'DATE-OBS', centertimeheader(ii)[0])
-os.system('rm *gregister.fits')
+			if os.path.isfile(centertimeheader(ii)[1]) : pass
+			else:
+				print(len(ii),'images will be combined', centertimeheader(ii)[1])
+				imcombine(i[:-1], centertimeheader(ii)[1])
+				puthdr(centertimeheader(ii)[1],'DATE-OBS', centertimeheader(ii)[0])
+	os.system('rm *gregister.fits')

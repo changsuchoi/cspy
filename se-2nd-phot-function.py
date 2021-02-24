@@ -12,50 +12,33 @@ from astropy.stats import sigma_clipping
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-def puthdr(inim, hdrkey, hdrval, hdrcomment=''):
-	from astropy.io import fits
-	hdr		=	fits.getheader(inim)
-	fits.setval(inim, hdrkey, value=hdrval, comment=hdrcomment)
-	comment     = inim+'\t'+'('+hdrkey+'\t'+str(hdrval)+')'
-
-def pixelscale(i):
-	cd11 = fits.getheader(i)['CD1_1']
-	cd12 = fits.getheader(i)['CD1_2']
-	cd21 = fits.getheader(i)['CD2_1']
-	cd22 = fits.getheader(i)['CD2_2']
-	pixscale=round(np.sqrt(cd11**2 + cd21**2) *3600 ,4)
-	puthdr(i,'PSCALE',round(pixscale,3))
-	#print('Pixel scale =', pixscale,'\"')
-	return pixscale
 
 # input files, config and params
-seconfigdir ='/data7/cschoi/code/sex.config/'
+seconfigdir ='/data7/cschoi/code/cspy/sex.config/'
 seconfig    ='se1.sex'
 separam     ='se1.param'
 separam_noPSF = 'se1_noPSF.param'
 seconv      ='default.conv'
 sennw       ='default.nnw'
-DETECT_MINAREA = str(5)
-DETECT_THRESH  = str(5)
+DETECT_MINAREA = str(3)
+DETECT_THRESH  = str(1.5)
 DEBLEND_NTHRESH = str(32)
 DEBLEND_MINCONT = str(0.005)
 
-
 # source extractor command
-
-def secom(im,psf=True):
-    #PSCALE=fits.getheader(i)['PSCALE']
-	PSCALE=pixelscale(im)
+def se2com(im,psf=False):
+	PSCALE=fits.getheader(im)['PSCALE']
 	fwhm_pix=fits.getheader(im)['FWHM_PIX']
+	opt_ap=fits.getheader(im)['OPT_AP']
 	aper_list=[3,5,7]
 	aper_list_fwhm=[1.0,1.5,2.0,2.5,3.0]
 	aper_input = ''
 	for i in aper_list: aper_input += '{},'.format(round(i/PSCALE,1))
 	#aper_input = aper_input[:-1]
 	for i in aper_list_fwhm: aper_input += '{},'.format(round(i*fwhm_pix,1))
-	aper_input = aper_input[:-1]
+	aper_input = aper_input+str(opt_ap)
 	fn = os.path.splitext(im)[0]
-	opt1= seconfigdir+seconfig+' -CATALOG_TYPE ASCII_HEAD -CATALOG_NAME '+ fn+'.se1'
+	opt1= seconfigdir+seconfig+' -CATALOG_TYPE ASCII_HEAD -CATALOG_NAME '+ fn+'.sef'
 	opt2a=' -PARAMETERS_NAME '+seconfigdir+separam
 	opt2b= ' -PARAMETERS_NAME '+seconfigdir+separam_noPSF
 	opt2=' -FILTER_NAME '+seconfigdir+seconv +' -STARNNW_NAME '+seconfigdir+sennw
@@ -67,201 +50,46 @@ def secom(im,psf=True):
 	opt6=' -PHOT_APERTURES '+aper_input+' '
 	opt7=' -PSF_NAME '+fn+'.psf '
 	opt8=' -PIXEL_SCALE '+str(PSCALE)+' '
+	opt9=' -SEEING_FWHM '+str(round(fwhm_pix*PSCALE))+ ' '
 	if psf==True:
-		secommand= 'sex -c '+opt1+opt2+opt2a+opt3+opt4+opt5+opt6+opt7+opt8 + im
+		secommand= 'sex -c '+opt1+opt2+opt2a+opt3+opt4+opt5+opt6+opt7+opt8+opt9 + im
 	else:
-		secommand= 'sex -c '+opt1+opt2+opt2b+opt3+opt4+opt5+opt6+opt8 + im
-	print(secommand)
-	sexout = subprocess.getoutput(secommand)
-	line = [s for s in sexout.split('\n') if 'RMS' in s]
-	skymed, skysig = float(line[0].split('Background:')[1].split('RMS:')[0]), float(line[0].split('RMS:')[1].split('/')[0])
+		secommand= 'sex -c '+opt1+opt2+opt2b+opt3+opt4+opt5+opt6+opt8+opt9 + im
 	os.system(secommand)
-	return skymed, skysig
-
-
-#macthing
-
-def matching(intbl, reftbl, inra, indec, refra, refdec, sep=2.0):
-    """
-    MATCHING TWO CATALOG WITH RA, Dec COORD. WITH python
-    INPUT   :   SE catalog, SDSS catalog file name, sepertation [arcsec]
-    OUTPUT  :   MATCED CATALOG FILE & TABLE
-    """
-    import numpy as np
-    import astropy.units as u
-    from astropy.table import Table, Column
-    from astropy.coordinates import SkyCoord
-    from astropy.io import ascii
-    incoord     = SkyCoord(inra, indec, unit=(u.deg, u.deg))
-    refcoord    = SkyCoord(refra, refdec, unit=(u.deg, u.deg))
-    #   INDEX FOR REF.TABLE
-    indx, d2d, d3d  = incoord.match_to_catalog_sky(refcoord)
-    mreftbl         = reftbl[indx]
-    mreftbl['sep']  = d2d
-    mergetbl        = intbl
-    for col in mreftbl.colnames:
-        mergetbl[col]   = mreftbl[col]
-    indx_sep        = np.where(mergetbl['sep']*3600.<sep)
-    mtbl            = mergetbl[indx_sep]
-    #mtbl.write(mergename, format='ascii', overwrite=True)
-    return mtbl
-
-def limitmag(N, zp, aper, skysigma):			# 3? 5?, zp, diameter [pixel], skysigma
-	import numpy as np
-	R           = float(aper)/2.				# to radius
-	braket      = N*skysigma*np.sqrt(np.pi*(R**2))
-	upperlimit  = float(zp)-2.5*np.log10(braket)
-	return round(upperlimit, 3)
-
-
-def starcut(mtbl,lowmag=14,highmag=19,filname='R',magtype='MAG_AUTO'):
-	idx=np.where( (mtbl['SNR_WIN'] >20) &
-				(mtbl['FLAGS'] == 0) &
-				(mtbl[filname] <19) &
-				(mtbl[filname] > 14) &
-				(mtbl[magtype[:3]+'ERR'+magtype[3:]]<0.1)		)
-	return mtbl[idx]
-
-#zp calculation
-magtypes=['MAG_AUTO', 'MAG_PSF', 'MAG_APER','MAG_APER_1','MAG_APER_2','MAG_APER_3']
-
-def zpcal(mtbl1,filname, magtype):
-    zp=mtbl1[filname]-mtbl1[magtype]
-    #zp3=sigma_clipped_stats(zp, sigma=3, maxiters=10)
-    zp2=sigma_clipped_stats(zp, sigma=2, maxiters=10)
-    print ('zp ',zp2[0], 'zp err',zp2[2])
-    filtered_data=sigma_clip(zp,sigma=2,maxiters=10)
-    selected, nonselected= ~filtered_data.mask, filtered_data.mask
-    zperrp=np.sqrt( np.sum(mtbl1[filerr][selected]**2 + \
-						mtbl1[magtype[:3]+'ERR'+magtype[3:]][selected]**2)\
-						/ len(mtbl1) )
-    print(magtype, 'zp', '{},'.format(round(zp2[0],3)),
-	 	'zperr', '{},'.format(round(zperrp,3)),
-		len(mtbl1[selected]),'stars from',len(mtbl1))
-    return zp2, selected,zperrp
-
-def fwhm_img(im,mtbl1):
-	fwhm_img=sigma_clipped_stats(mtbl1['FWHM_IMAGE'], sigma=3, maxiters=10)
-	filtered_data=sigma_clip(mtbl1['FWHM_IMAGE'],sigma=3,maxiters=10)
-	selected, nonselected= ~filtered_data.mask, filtered_data.mask
-	print('FWHM_IMAGE','{}'.format(round(fwhm_img[0],3)),
-		len(mtbl1[selected]),'stars from',len(mtbl1))
-	puthdr(im, 'FWHM_PIX', round(fwhm_img[0],3), hdrcomment='FWHM PIXEL VALUE')
-	return fwhm_img[0]
-
-# 5sigma detection limit estimate for MAG_AUTO, MAG_PSF
-# error fitting polinomial
-def UL_5sig_err(im,setbl,mtbl,mtbl1,magtype,zp2):
-	fn=os.path.splitext(im)[0]
-	from astropy.modeling import models, fitting
-	import numpy as np
-	magerrtype = magtype[:3]+'ERR'+magtype[3:]
-	x,y = mtbl1[magtype],mtbl1[magerrtype]
-	#x,y=setbl['MAG_AUTO'],setbl['MAGERR_AUTO']
-	x,y=x[np.where(y<1)],y[np.where(y<1)]
-	#fit_init=models.Polynomial1D(7)
-	fit_init=models.Exponential1D()
-	fit_t=fitting.LevMarLSQFitter()
-	#fit_t=fitting.LinearLSQFitter()
-	t=fit_t(fit_init,x,y)
-	plt.plot(setbl[magtype]+zp2[0],setbl[magerrtype],'ro')
-	plt.plot(mtbl[magtype]+zp2[0],mtbl[magerrtype],'ko')
-	plt.plot(x+zp2[0],y,'bo')
-	plt.xlabel('Mag')
-	plt.ylabel('Error')
-	plt.xlim(10,25)
-	plt.ylim(-0.1,0.5)
-	xp=np.linspace(-20,0,20001)
-	plt.plot(xp+zp2[0],t(xp),'--')
-	plt.hlines(0.2,10,25)
-	idx_min=np.where(np.abs(t(xp)-0.198) == np.min(np.abs(t(xp)-0.198)))
-	xp[idx_min]+zp2[0] #
-	plt.vlines(xp[idx_min]+zp2[0],-0.1,0.5)
-	# result print, file, header
-	plt.text(12,0.4,'5 sigma Detection Limit error=0.198')
-	plt.text(12,0.3,'5sig_UL = '+'{}'.format(round((xp[idx_min]+zp2[0])[0],3)))
-	plt.title(fn+ ' '+ magtype+' '+'5 sig Detection Limit')
-	plt.savefig(fn+'_'+magtype+'_'+'5sigUL.png')
-	plt.close()
-	return round((xp[idx_min]+zp2[0])[0],3)
-
-
-'''
-def fwhm_wcs(mtbl1):
-	fwhm_wcs=sigma_clipped_stats(mtbl1['FWHM_WORLD'], sigma=3, maxiters=10)
-	filtered_data=sigma_clip(mtbl1['FWHM_WORLD'],sigma=3,maxiters=10)
-	selected, nonselected= ~filtered_data.mask, filtered_data.mask
-	print('FWHM_WORLD','{},'.format(round(fwhm_wcs[0]*3600,3)),
-		len(mtbl1[selected]),'stars from',len(mtbl1))
-	return fwhm_wcs[0]*3600
-'''
-def zp_plot(mtbl1, zp2, selected, magtype, im, filname='R', filerr='Rerr'):
-	fn=os.path.splitext(im)[0]
-	zp=mtbl1[filname]-mtbl1[magtype]
-	xr=np.linspace(np.min(mtbl1[filname]), np.max(mtbl1[filname]), len(zp))
-	magerrtype=magtype[:3]+'ERR'+magtype[3:]
-	zperrp=np.sqrt( np.sum(mtbl1[filerr][selected]**2 + \
-						mtbl1[magtype[:3]+'ERR'+magtype[3:]][selected]**2)\
-						/ len(mtbl1) )
-	plt.plot(mtbl1[filname],zp,'o')
-	plt.errorbar(mtbl1[filname],zp,yerr=zperrp,fmt='o',capsize=1)
-	plt.ylim(zp2[0]-2,zp2[0]+2)
-	plt.xlim(np.min(mtbl1[filname]),np.max(mtbl1[filname]))
-	#plt.hlines(zp3[0],xmin=12,xmax=20,color='b')
-	plt.hlines(zp2[0],xmin=12,xmax=20,color='r')
-	sig2=np.ones(len(mtbl1))*zp2[2]
-	zp2a=np.ones(len(mtbl1))*zp2[0]
-	#plt.fill_between(xr,zp3a+sig3,zp3a-sig3,color='b',alpha=0.5)
-	plt.fill_between(xr,zp2a+sig2,zp2a-sig2,color='r',alpha=0.5)
-	plt.plot(mtbl1[filname][~selected],zp[~selected],'go')
-	plt.plot(mtbl1[filname][selected],zp[selected],'ko')
-	plt.title(fn+', '+filname+' '+magtype)
-	plt.ylabel('Zeropoint (AB Mag)')
-	plt.xlabel(filname +' Reference Mag (AB)')
-	plt.savefig(fn+'_'+filname+'_'+magtype+'_zp.png')
-	plt.close()
-
-# fits to png with regions
-def fitplot(im, mtbl1, magtype, selected):
-	import matplotlib.pyplot as plt
-	from astropy.wcs import WCS
-	from astropy.io import fits
-	from astropy.visualization import MinMaxInterval,ZScaleInterval,PercentileInterval
-	from astropy.visualization import SqrtStretch,LinearStretch
-	from astropy.visualization import ImageNormalize
-	imdata,imhdr=fits.getdata(im,header=True)
-	norm = ImageNormalize(imdata,
-			interval=PercentileInterval(99.5),
-			stretch=LinearStretch()
-							)
-	wcs=WCS(imhdr)
-	fig,ax=plt.subplots()
-	ax=plt.subplot(projection=wcs)
-	ax.set_xlabel('RA')
-	ax.set_ylabel('DEC')
-
-	#ax.invert_xaxis()
-	ax.set_title(im+' '+magtype)
-	ax.scatter(mtbl1[selected]['ALPHA_J2000'],mtbl1[selected]['DELTA_J2000'],
-		transform=ax.get_transform('fk5'),s=20, edgecolor='green',facecolor='none')
-	ax.scatter(mtbl1[~selected]['ALPHA_J2000'],mtbl1[~selected]['DELTA_J2000'],
-		transform=ax.get_transform('fk5'),s=20, edgecolor='red',facecolor='none')
-	img=ax.imshow(imdata,cmap='gray',norm=norm,origin='lower')
-	ax.invert_yaxis()
-	fig.colorbar(img)
-	plt.savefig(os.path.splitext(im)[0]+'_'+magtype+'.png')
-	plt.close()
 
 
 
 
-
-
-
-
-
-
-
+def secat_zp(im):
+	from astropy.table import Table
+	from astropy import units as u
+	from astropy.table import Column
+	fn = os.path.splitext(im)[0]
+	sefcat=ascii.read(fn+'.sef')
+	sefcat['MAG_AUTO']=sefcat['MAG_AUTO']+hdr['ZP_AUTO']
+	sefcat['MAGERR_AUTO']=np.sqrt(sefcat['MAGERR_AUTO']**2 + hdr['ZPE_AUTO']**2)
+	sefcat['MAG_APER']=sefcat['MAG_APER']+hdr['ZP_AP3']
+	sefcat['MAGERR_APER']=np.sqrt(sefcat['MAGERR_APER']**2 + hdr['ZPE_AP3']**2)
+	sefcat['MAG_APER_1']=sefcat['MAG_APER_1']+hdr['ZP_AP5']
+	sefcat['MAGERR_APER_1']=np.sqrt(sefcat['MAGERR_APER_1']**2 + hdr['ZPE_AP5']**2)
+	sefcat['MAG_APER_2']=sefcat['MAG_APER_2']+hdr['ZP_AP7']
+	sefcat['MAGERR_APER_2']=np.sqrt(sefcat['MAGERR_APER_2']**2 + hdr['ZPE_AP7']**2)
+	sefcat['MAG_APER_3']=sefcat['MAG_APER_3']+hdr['ZP_F10']
+	sefcat['MAGERR_APER_3']=np.sqrt(sefcat['MAGERR_APER_3']**2 + hdr['ZPE_F10']**2)
+	sefcat['MAG_APER_4']=sefcat['MAG_APER_4']+hdr['ZP_F15']
+	sefcat['MAGERR_APER_4']=np.sqrt(sefcat['MAGERR_APER_4']**2 + hdr['ZPE_F15']**2)
+	sefcat['MAG_APER_5']=sefcat['MAG_APER_5']+hdr['ZP_F20']
+	sefcat['MAGERR_APER_5']=np.sqrt(sefcat['MAGERR_APER_5']**2 + hdr['ZPE_F20']**2)
+	sefcat['MAG_APER_6']=sefcat['MAG_APER_6']+hdr['ZP_F25']
+	sefcat['MAGERR_APER_6']=np.sqrt(sefcat['MAGERR_APER_6']**2 + hdr['ZPE_F25']**2)
+	sefcat['MAG_APER_7']=sefcat['MAG_APER_7']+hdr['ZP_F30']
+	sefcat['MAGERR_APER_7']=np.sqrt(sefcat['MAGERR_APER_7']**2 + hdr['ZPE_F30']**2)
+	sefcat['MAG_APER_8']=sefcat['MAG_APER_8']+hdr['ZP_OPTA']
+	sefcat['MAGERR_APER_8']=np.sqrt(sefcat['MAGERR_APER_8']**2 + hdr['ZPE_OPTA']**2)
+	if 'MAG_PSF' in sefcat.colnames:
+		sefcat['MAG_PSF']=sefcat['MAG_PSF']+hdr['ZP_PSF']
+		sefcat['MAGERR_PSF']=np.sqrt(sefcat['MAGERR_PSF']**2 + hdr['ZPE_PSF']**2)
+	sefcat.write(fn+'.dat',format='ascii.commented_header',overwrite=True)
 
 
 

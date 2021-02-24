@@ -5,6 +5,7 @@ This is adapted from http://obswww.unige.ch/%7Etewes/alipy/tutorial.html
 import alipy
 import glob
 import os
+from multiprocessing import Process,Pool
 
 # images_to_align = sorted(glob.glob("images/*.fits"))
 # images_to_align = sorted(glob.glob('Calib-*.fits'))
@@ -113,9 +114,9 @@ def alipy_epoch(lines):
         print('='*60,'\n')
         print(lines.index(iii), 'of', len(iii))
         if len(ii) == 1 :
-            print(ii[0], 'single image')
-            os.system('mv '+ii[0]+' gr'+ii[0])
-            os.system('mv '+os.path.splitext(ii[0])+'_gregister.fits')
+            print(ii[0], 'single image, No touch')
+            #os.system('mv '+ii[0]+' gr'+ii[0])
+            #os.system('mv '+os.path.splitext(ii[0])+'_gregister.fits')
         else :
             ref_image=ii[0]
             images_to_align=ii
@@ -125,9 +126,9 @@ def alipy_epoch(lines):
     os.system('mv alipy_out/*gregister.fits .')
 
 
-os.system('rename _gregister.fits .fits alipy_out/*gregister*')
-os.system('rename Calib grCalib alipy_out/Calib*.fits')
-os.system('mv alipy_out/grCalib*.fits .')
+#os.system('rename _gregister.fits .fits alipy_out/*gregister*')
+#os.system('rename Calib grCalib alipy_out/Calib*.fits')
+#os.system('mv alipy_out/grCalib*.fits .')
 
 
 

@@ -1,3 +1,5 @@
+#swarp running warpper
+
 from astropy.io import ascii
 from astropy.io import fits
 import astropy.units as u
@@ -93,23 +95,24 @@ def radec_center(im):
 
 salist=glob.glob('saCalib*.fits')
 salist.sort()
-salines= epoch_group(salist)
-#salines[-1][:-1].split(',')
 
-for i in salines:
-	ii=i[:-1].split(',')
-	if len(ii)==1 :
-		if os.path.isfile(centertimeheader(ii)[1]) : pass
+#salines[-1][:-1].split(',')
+def swarp_epoch(salines):
+	for i in salines:
+		ii=i[:-1].split(',')
+		if len(ii)==1 :
+			print("single image, PASS")
+			pass
+			#if os.path.isfile(centertimeheader(ii)[1]) : pass
+			#else:
+				#	os.system('cp '+ii[0]+' '+centertimeheader(ii)[1])
+				#puthdr(centertimeheader(ii)[1],'DATE-OBS', centertimeheader(ii)[0])
 		else:
-			print("single image")
-			os.system('cp '+ii[0]+' '+centertimeheader(ii)[1])
-			#puthdr(centertimeheader(ii)[1],'DATE-OBS', centertimeheader(ii)[0])
-	else:
-		if os.path.isfile(centertimeheader(ii)[1]) : pass
-		else:
-			print(len(ii),'images will be combined', centertimeheader(ii)[1])
-			swarpcom(ii)
-			puthdr(centertimeheader(ii)[1],'DATE-OBS', centertimeheader(ii)[0])
+			if os.path.isfile(centertimeheader(ii)[1]) : pass
+			else:
+				print(len(ii),'images will be combined', centertimeheader(ii)[1])
+				swarpcom(ii)
+				puthdr(centertimeheader(ii)[1],'DATE-OBS', centertimeheader(ii)[0])
 
 
 # swarpregister in development
@@ -144,10 +147,8 @@ def swarpregister(im,refim='ref.fits'):
 '''
 
 # swarp -d
+
 '''
-
-
-
 # Default configuration file for SWarp 2.41.4
 # EB 2021-02-04
 #

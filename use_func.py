@@ -50,3 +50,51 @@ def radec_center(im):
 	decstr=c.dec.to_string(unit=u.deg,sep=':')
 	racent, deccent = racent.item(), deccent.item()
 	return rastr,decstr,racent,deccent
+
+def imcenter_offset(im, ra=161.645641, dec=13.750859,seplimit=10):
+	import numpy as np
+	from astropy import units as u
+	from astropy.coordinates import SkyCoord
+	a,b,c,d=radec_center(im)
+	c1=SkyCoord(c*u.deg,d*u.deg)
+	c2=SkyCoord(ra*u.deg, dec*u.deg)
+	sep = c1.separation(c2)
+	#print(sep.arcmin, 'away from given position to image center')
+	if sep.arcmin > seplimit :
+		print(im,'Too far away',sep.arcmin)
+	return sep
+
+
+
+def targetfind(tra, tdec, refra, refdec, sep=2.0):
+	import astropy.units as u
+	from astropy.coordinates import SkyCoord
+	targ_coord	= SkyCoord(tra, tdec, unit=(u.deg, u.deg))
+	phot_coord	= SkyCoord(refra, refdec, unit=(u.deg, u.deg))
+	indx, d2d, d3d	= targ_coord.match_to_catalog_sky(phot_coord)
+	return indx.item(), round(d2d.arcsec.item(),2)
+	#return indx, d2d, d3d
+
+def trim(inim, position, size, outim='trim.fits'):
+	# Load the image and the WCS
+	hdu = fits.open(inim)[0]
+	wcs = WCS(hdu.header)
+	# Make the cutout, including the WCS
+	cutout = Cutout2D(hdu.data, position=position, size=size, wcs=wcs)
+	# Put the cutout image in the FITS HDU
+	hdu.data = cutout.data
+	# Update the FITS header with the cutout WCS
+	hdu.header.update(cutout.wcs.to_header())
+	# Write the cutout to a new FITS file
+	hdu.writeto(outim, overwrite=True)
+
+import time
+starttime=time.time()
+# job running
+endtime=time.time()
+duration= endtime-starttime
+
+
+starttime=time.time();
+ls saCalib* | wc -l
+endtime=time.time();os.system('ls saCalib* | wc -l')
