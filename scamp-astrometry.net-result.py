@@ -32,7 +32,7 @@ astscampconfig = astcodedirec+'astrom.scamp'
 #imlist.sort()
 #for img in imlist: print(img)
 
-def scamp_net(i,projection='TPV'):
+def scamp_net(i,projection='TAN'):
 	newname='sa'+i
 	print('='*60, '\n')
 	os.system('cp '+i+' '+newname)
@@ -50,7 +50,7 @@ def scamp_net(i,projection='TPV'):
 
 	# scamp
 	print('scamp working ...')
-	opt1= ' -ASTREF_CATLOG GAIA-DR2 -SAVE_REFCATALOG Y'
+	opt1= ' -ASTREF_CATLOG GAIA-EDR3 -SAVE_REFCATALOG Y'
 	opt1a=' -ASTREFCAT_NAME astrefcat.cat'
 	opt2= ' -CROSSID_RADIUS 2.0'
 	opt3= ' -PIXSCALE_MAXERR 1.2'             # Max scale-factor uncertainty
@@ -63,7 +63,7 @@ def scamp_net(i,projection='TPV'):
 	opt10=' -ASTREF_CATLOG GAIA-EDR3 '
 	scampcom='scamp -c '+astscampconfig+' '+iname+'.ldac'+' -ASTREF_CATLOG 2MASS'
 	scampcom='scamp -c '+astscampconfig+' '+iname+'.ldac'+' -ASTREF_CATLOG GAIA-DR2 -SAVE_REFCATALOG Y'
-	scampcom='scamp -c '+astscampconfig+' '+iname+'.ldac'+' -ASTREF_CATLOG GAIA-EDR3'+ opt9 # TPV projection
+	scampcom='scamp -c '+astscampconfig+' '+iname+'.ldac'+' -ASTREF_CATLOG GAIA-EDR3'
 	print(scampcom)
 	scampout=subprocess.getoutput(scampcom)
 	line1=[s for s in scampout.split('\n') if 'cont.' in s]
@@ -124,11 +124,13 @@ fits.writeto('a'+inim,fits.getdata(inim),hdr1)
 #f=open('scamp_net_result.txt','w')
 # scamp_net(iii)
 # headmerge(iii)
-def scamp_astrometry_net(im,projection='TPV'):
+def scamp_astrometry_net(im,projection='SAME'):
 	contnum=scamp_net(im,projection=projection)
 	headmerge(im)
 	fits.setval('sa'+im, 'FLXSCALE', value=1)
 	fits.setval('sa'+im, 'SCAMPCON', value=contnum, hdrcomment='SCAMP cont. num')
+
+# !swarp t.fits -c default.swarp -PROJECTION_TYPE TPV -IMAGEOUT_NAME=sat.fits
 
 '''
 for i in range(len(oklist)) :
@@ -142,10 +144,15 @@ salist=glob.glob('saCalib*.fits')
 salist.sort()
 print ('from oklist', len(oklist), 'salist',len(salist))
 '''
-cpunum=4
-if __name__ == '__main__' :
-	p=Pool(cpunum)
-	p.map(scamp_astrometry_net,oklist)
+
+'''
+if __name__ == '__main__':
+	cpunum=4
+	if __name__ == '__main__' :
+		p=Pool(cpunum)
+		p.map(scamp_astrometry_net,oklist)
+'''
+
 #f.close()
 #hdr1.fromTxtFile('astromtest.head')
 #hdr1.extend(fits.Header.fromtextfile(iname+'.head'), update=True, update_first=True)

@@ -67,7 +67,9 @@ def secat_zp(im):
 	from astropy import units as u
 	from astropy.table import Column
 	fn = os.path.splitext(im)[0]
+	hdr=fits.getheader(im)
 	sefcat=ascii.read(fn+'.sef')
+	print('Making final catalog',fn+'.dat')
 	sefcat['MAG_AUTO']=sefcat['MAG_AUTO']+hdr['ZP_AUTO']
 	sefcat['MAGERR_AUTO']=np.sqrt(sefcat['MAGERR_AUTO']**2 + hdr['ZPE_AUTO']**2)
 	sefcat['MAG_APER']=sefcat['MAG_APER']+hdr['ZP_AP3']
@@ -93,6 +95,10 @@ def secat_zp(im):
 		sefcat['MAGERR_PSF']=np.sqrt(sefcat['MAGERR_PSF']**2 + hdr['ZPE_PSF']**2)
 	sefcat.write(fn+'.dat',format='ascii.commented_header',overwrite=True)
 
+def se2nd(im):
+	psf=True
+	se2com(im)
+	secat_zp(im)
 
 
 '''

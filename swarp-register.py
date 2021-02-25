@@ -134,7 +134,7 @@ def swarp_single(im):
 	print(swarpcom)
 	os.system(swarpcom)
 
-
+# !swarp t.fits -c default.swarp -PROJECTION_TYPE TAN -IMAGEOUT_NAME=satan.fits 
 
 # swarp -d
 '''

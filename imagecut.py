@@ -15,7 +15,9 @@ from pyraf import iraf
 import astropy.wcs.utils as wcsutils
 import os,sys
 import glob
-
+from astropy.nddata import Cutout2D
+from astropy import units as u
+import numpy as np
 
 #im=sys.argv[1]
 #infile=sorted(glob.glob(im))
@@ -30,25 +32,27 @@ import glob
 #ra, dec = 197.47311, -23.368377
 size = 10 # arcmin unit, length of square side
 ra,dec=161.645641, 13.750859
-def imcopy(im,size=10,ra=False,dec=False):
+def imcopy(im,size=10,position=(False,False)):
+	outname=os.path.splitext(im)[0]+'_'+str(size)+'min_cut.fits'
+	if os.path.isfile(outname) : os.system('rm '+outname)
 	hdr= fits.getheader(im)
 	w = WCS(hdr)
-	xpscale,ypscale=wcsutils.proj_plane_pixel_scales(w)*60
+	xpscale,ypscale=wcsutils.proj_plane_pixel_scales(w)*3600
 	pixscale=(xpscale+ypscale)/2.
-	if (ra==False) or (dec==False) :
+	if position==(False,False) :
 		print('RA or DEC input, False, position will be center of',im)
-		px, py= hdr['NAXIS1']/2., hdr['NAXIS2']/2.
-		ax,bx=px-size/2/pixscale,px+size/2/pixscale
-		ay,by=py-size/2/pixscale,py+size/2/pixscale
+		px, py = hdr['NAXIS1']/2., hdr['NAXIS2']/2.
+		ax, bx = px-size/2/pixscale*60, px+size/2/pixscale*60
+		ay, by = py-size/2/pixscale*60, py+size/2/pixscale*60
 	else:
+		ra,dec=position[0],position[1]
 		px, py = w.wcs_world2pix(ra, dec, 1)
 		print ('center pixel coordinates', int(px), int(py) )
-		ax,bx=px-size/2/pixscale,px+size/2/pixscale
-		ay,by=py-size/2/pixscale,py+size/2/pixscale
-	print ('pixel scale =', '%.3f'% (pixscale*60), size,
+		ax, bx = px-size/2/pixscale*60, px+size/2/pixscale*60
+		ay, by = py-size/2/pixscale*60, py+size/2/pixscale*60
+	print ('pixel scale =', '%.3f'% (pixscale), size,
 			'arcmin rectangular cut =',int(bx - ax),'pixels')
 	region='['+str(int(ax))+':'+str(int(bx))+','+str(int(ay))+':'+str(int(by))+']'
-	outname=os.path.splitext(im)[0]+'_'+str(size)+'min_cut.fits'
 	print (outname,'will be created')
 	#region='[200:2048,60:2048]'
 	chinim=im+region
@@ -74,6 +78,39 @@ def radec_center(im):
 	racent, deccent = racent.item(), deccent.item()
 	return rastr,decstr,racent,deccent
 
+def trim(inim, position=(False,False), size=(10,10)):
+	'''
+	position=(ra,dec) in deg unit
+	size=(px,py) in pixel unit
+	'''
+	from astropy.nddata import Cutout2D
+	from astropy import units as u
+	import numpy as np
+	hdu = fits.open(inim)[0]
+	w = WCS(hdu.header)
+	outim=os.path.splitext(inim)[0]+'_'+str(size[0])+'min_cut.fits'
+	if position==(False,False):
+		px, py= hdr['NAXIS1']/2., hdr['NAXIS2']/2.
+		cra,cdec=w.all_pix2world(px,py,1)
+		print('Image Center position used,', cra, cdec, '\n')
+		position=(cra,cdec)
+	else : print('center position',position)
+	xpscale,ypscale=wcsutils.proj_plane_pixel_scales(w)*3600
+	pixscale=(xpscale+ypscale)/2.
+	size=(int(round(size[0]*60/pixscale)),int(round(size[1]*60/pixscale)))
+	print('size',size)
+	# Load the image and the WCS
+	# Make the cutout, including the WCS
+	cutout = Cutout2D(hdu.data, position=position, size=size, wcs=w,
+					mode='trim',fill_value=1.0e-30)
+	# Put the cutout image in the FITS HDU
+	hdu.data = cutout.data
+	# Update the FITS header with the cutout WCS
+	hdu.header.update(cutout.wcs.to_header())
+	# Write the cutout to a new FITS file
+	hdu.writeto(outim, overwrite=True)
+
+
 def xyimcopy(inim,sizex,sizey):
 	hdr= fits.getheader(inim)
 	w = WCS(hdr)
@@ -81,7 +118,6 @@ def xyimcopy(inim,sizex,sizey):
 	print ('center pixel coordinates', int(px), int(py) )
 	xpscale,ypscale=wcsutils.proj_plane_pixel_scales(w)*60 # pixel scale armin unit
 	pixscale=(xpscale+ypscale)/2.
-
 	ax,bx=px-sizex/2/pixscale,px+sizex/2/pixscale
 	ay,by=py-sizey/2/pixscale,py+sizey/2/pixscale
 	print ('pixel scale =', '%.3f'% (pixscale*60), sizex, 'arcmin rectangular cut =',int(bx - ax),'pixels')
@@ -93,6 +129,10 @@ def xyimcopy(inim,sizex,sizey):
 	chinim=inim+region
 	iraf.imcopy(chinim,output=outname)
 
+
+
+
+'''
 def imcopypix(inim,region):
 	#hdr= fits.getheader(inim)
 	#w = WCS(hdr)
@@ -110,7 +150,7 @@ def imcopypix(inim,region):
 	#region='[200:2048,60:2048]'
 	chinim=inim+region
 	iraf.imcopy(chinim,output=outname)
-
+'''
 
 
 #2D cutout WCS example

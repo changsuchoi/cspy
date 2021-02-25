@@ -23,7 +23,7 @@ from multiprocessing import Process, Pool
 
 def wcsremap(im,refim='ref.fits'):
 	#print inim
-	outim='regw_'+im
+	outim='rew_'+im
 	if os.path.isfile(outim):
 		print(outim,'exist, Pass')
 		pass
@@ -37,8 +37,8 @@ def wcsremap(im,refim='ref.fits'):
 
 
 
-for inim in inlist :
-	wcsremap(im,refim='ref.fits')
+# for inim in inlist :
+# 	wcsremap(im,refim='ref.fits')
 
 '''
 if __name__ == '__main__' :

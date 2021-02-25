@@ -76,11 +76,18 @@ def targetfind(tra, tdec, refra, refdec, sep=2.0):
 	#return indx, d2d, d3d
 
 def trim(inim, position, size, outim='trim.fits'):
+	'''
+	position=(ra,dec) in deg unit
+	size=(px,py) in pixel unit
+	'''
+	from astropy.nddata import Cutout2D
+	from astropy import units as u
+	import numpy as np
 	# Load the image and the WCS
 	hdu = fits.open(inim)[0]
 	wcs = WCS(hdu.header)
 	# Make the cutout, including the WCS
-	cutout = Cutout2D(hdu.data, position=position, size=size, wcs=wcs)
+	cutout = Cutout2D(hdu.data, position=position, size=size, wcs=wcs, mode='partial',fill_value=1.0e-30)
 	# Put the cutout image in the FITS HDU
 	hdu.data = cutout.data
 	# Update the FITS header with the cutout WCS
@@ -115,4 +122,3 @@ for im in salist:
 		puthdr(im, keyword, hdrval, hdrcomment='')
 
 keyword = 'DATE-OBS'
- 

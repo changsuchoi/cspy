@@ -195,7 +195,7 @@ def se1st(im,psf=psf):
 		puthdr(im, 'UL5_PSF', sig5ul, hdrcomment='MAG_PSF'+' '+'5 sigma upperlimit')
 	else:pass
 
-def secom_final(im,psf=False):
+def secom_final(im,psf=psf):
 	DETECT_THRESH='1.5'
 	hdr=fits.getheader(im)
 	PSCALE=hdr['PSCALE']

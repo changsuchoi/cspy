@@ -86,13 +86,21 @@ def alipy_in2ref(ref_image,images_to_align):
 # output name = gr_Calib-LSGT-NGC3367-20190630-084141-r-180.fits
 
 def alipy_ref2in(im,ref_image=['ref.fits']):
-    '''
-    ref_image should be a list!
-    like ref_image=['ref.fits']
-    '''
-    newname = 'regg_'+os.path.splitext(im)[0]+os.path.splitext(im)[1]
-    if os.path.isfile(newname): pass
-    else:
-        identifications= identify_transform(im, ref_image, rad= 5, nb=500, verbose=False, visual=False)
-        align_images(im, identifications, iraf=True, outdir='alipy_out')
-        os.system('mv alipy_out/'+os.path.splitext(ref_image[0])[0]+'_gregister'+os.path.splitext(ref_image[0])[1]+' '+newname)
+	'''
+	ref_image should be a list!
+	like ref_image=['ref.fits']
+	'''
+	newname = 'reg_'+os.path.splitext(im)[0]+os.path.splitext(im)[1]
+	if os.path.isfile(newname): pass
+	else:
+		try: alipyrun(im,ref_image,newname)
+		except:
+			print('error')
+
+
+def alipyrun(im,ref_image,newname):
+	identifications= identify_transform(im, ref_image,
+					rad= 5, nb=500, verbose=False, visual=False)
+	align_images(im, identifications, iraf=True, outdir='alipy_out')
+	os.system('mv alipy_out/'+os.path.splitext(ref_image[0])[0]+
+			'_gregister'+os.path.splitext(ref_image[0])[1]+' '+newname)
