@@ -32,25 +32,67 @@ astscampconfig = astcodedirec+'astrom.scamp'
 #imlist.sort()
 #for img in imlist: print(img)
 
-def scamp_net(i,projection='TAN'):
+def scamp_net(i,astref=False,projection='TAN'):
 	newname='sa'+i
 	print('='*60, '\n')
-	os.system('cp '+i+' '+newname)
+	#os.system('cp '+i+' '+newname)
 	iname = i.split('.')[0]
 	# source extractor
 	secom = 'sex '+i+' -c '+astseconfig+' -PARAMETERS_NAME '+astseparam+' -CATALOG_NAME '+iname+'.ldac'
 	seout = subprocess.getoutput(secom)
-
 	line1 = [s for s in seout.split('\n') if 'RMS' in s]
 	line2 = [s for s in seout.split('\n') if 'Objects: detected' in s]
 	skymed, skysig = float(line1[0].split('Background:')[1].split('RMS:')[0]), float(line1[0].split('RMS:')[1].split('/')[0])
 	nobj, nse      = float(line2[0].split('Objects: detected ')[1].split('/')[0]), float(line2[0].split('Objects: detected ')[1].split('sextracted')[1])
 	print('sextractor working ...')
 	print('detected',nobj,'sextracted',nse)
-
 	# scamp
 	print('scamp working ...')
-	opt1= ' -ASTREF_CATLOG GAIA-EDR3 -SAVE_REFCATALOG Y'
+	opt1= ' -ASTREF_CATALOG GAIA-EDR3 -SAVE_REFCATALOG Y'
+	opt1= ' -ASTREF_CATALOG FILE -ASTREFCAT_NAME '+astref
+	opt1a=' -ASTREFCAT_NAME astrefcat.cat'
+	opt2= ' -CROSSID_RADIUS 2.0'
+	opt3= ' -PIXSCALE_MAXERR 1.2'             # Max scale-factor uncertainty
+	opt4= ' -POSANGLE_MAXERR 5.0'            # Max position-angle uncertainty (deg)
+	opt5= ' -POSITION_MAXERR 1.0'           # Max positional uncertainty (arcmin)
+	opt6= ' -SN_THRESHOLDS 10.0,100.0'      # S/N thresholds (in sigmas) for all and high-SN sample
+	opt7= ' -FWHM_THRESHOLDS 0.0,100.0'       # FWHM thresholds (in pixels) for sources
+	opt8= ' -ELLIPTICITY_MAX 0.5'             # Max. source ellipticity
+	opt9= ' -PROJECTION_TYPE '+projection+' '			 # SAME, TPV or TAN
+	opt10=' -ASTREF_CATALOG GAIA-EDR3 '
+	scampcom='scamp -c '+astscampconfig+' '+iname+'.ldac'+' -ASTREF_CATALOG 2MASS'
+	scampcom='scamp -c '+astscampconfig+' '+iname+'.ldac'+' -ASTREF_CATALOG GAIA-DR2 -SAVE_REFCATALOG Y'
+	scampcoma='scamp -c '+astscampconfig+' '+iname+'.ldac'+' -ASTREF_CATALOG GAIA-EDR3'+ opt9
+	scampcomb='scamp -c '+astscampconfig+' '+iname+'.ldac'+opt1+opt9
+	scampcom1='scamp -c '+astscampconfig+' '+iname+'.ldac'+' -ASTREF_CATALOG GAIA-EDR3 -SAVE_REFCATALOG Y '+opt9
+	print(scampcom)
+	scampout=subprocess.getoutput(scampcom)
+	line1=[s for s in scampout.split('\n') if 'cont.' in s]
+	contnum = scampout.split(line1[0])[1].split('\n')[1].split(' ')[11]
+	contnum = scampout.split(line1[0])[1].split('\n')[1].split('"')[1].split(' ')[3]
+	print('cont.',contnum)
+	print('='*60, '\n')
+	os.system('rm '+iname+'.ldac')
+	return(contnum)
+
+def scamp_net0(i,projection='TAN'):
+	#save refcat used for scamp
+	newname='sa'+i
+	print('='*60, '\n')
+	#os.system('cp '+i+' '+newname)
+	iname = i.split('.')[0]
+	# source extractor
+	secom = 'sex '+i+' -c '+astseconfig+' -PARAMETERS_NAME '+astseparam+' -CATALOG_NAME '+iname+'.ldac'
+	seout = subprocess.getoutput(secom)
+	line1 = [s for s in seout.split('\n') if 'RMS' in s]
+	line2 = [s for s in seout.split('\n') if 'Objects: detected' in s]
+	skymed, skysig = float(line1[0].split('Background:')[1].split('RMS:')[0]), float(line1[0].split('RMS:')[1].split('/')[0])
+	nobj, nse      = float(line2[0].split('Objects: detected ')[1].split('/')[0]), float(line2[0].split('Objects: detected ')[1].split('sextracted')[1])
+	print('sextractor working ...')
+	print('detected',nobj,'sextracted',nse)
+	# scamp
+	print('scamp working ...')
+	opt1= ' -ASTREF_CATALOG GAIA-EDR3 -SAVE_REFCATALOG Y'
 	opt1a=' -ASTREFCAT_NAME astrefcat.cat'
 	opt2= ' -CROSSID_RADIUS 2.0'
 	opt3= ' -PIXSCALE_MAXERR 1.2'             # Max scale-factor uncertainty
@@ -61,16 +103,17 @@ def scamp_net(i,projection='TAN'):
 	opt8= ' -ELLIPTICITY_MAX 0.5'             # Max. source ellipticity
 	opt9= ' -PROJECTION_TYPE '+projection+' '			 # SAME, TPV or TAN
 	opt10=' -ASTREF_CATLOG GAIA-EDR3 '
-	scampcom='scamp -c '+astscampconfig+' '+iname+'.ldac'+' -ASTREF_CATLOG 2MASS'
-	scampcom='scamp -c '+astscampconfig+' '+iname+'.ldac'+' -ASTREF_CATLOG GAIA-DR2 -SAVE_REFCATALOG Y'
-	scampcom='scamp -c '+astscampconfig+' '+iname+'.ldac'+' -ASTREF_CATLOG GAIA-EDR3'
-	print(scampcom)
-	scampout=subprocess.getoutput(scampcom)
+	scampcom1='scamp -c '+astscampconfig+' '+iname+'.ldac'+\
+				' -CHECKPLOT_TYPE NONE -ASTREF_CATALOG GAIA-EDR3 -SAVE_REFCATALOG Y '+opt9
+	print(scampcom1)
+	scampout=subprocess.getoutput(scampcom1)
 	line1=[s for s in scampout.split('\n') if 'cont.' in s]
 	contnum = scampout.split(line1[0])[1].split('\n')[1].split(' ')[11]
 	contnum = scampout.split(line1[0])[1].split('\n')[1].split('"')[1].split(' ')[3]
 	print('cont.',contnum)
+	print('Save the astrometry reference cat file, find GAIA*.cat')
 	print('='*60, '\n')
+	os.system('rm '+iname+'.ldac')
 	return(contnum)
 
 def puthdr(inim, hdrkey, hdrval, hdrcomment=''):
@@ -124,22 +167,30 @@ fits.writeto('a'+inim,fits.getdata(inim),hdr1)
 #f=open('scamp_net_result.txt','w')
 # scamp_net(iii)
 # headmerge(iii)
-def scamp_astrometry_net(im,projection='SAME'):
-	contnum=scamp_net(im,projection=projection)
+def scamp_astrometry_net(im,astref=False,projection='TAN'):
+	contnum=scamp_net(im,astref=astref,projection=projection)
 	headmerge(im)
 	fits.setval('sa'+im, 'FLXSCALE', value=1)
 	fits.setval('sa'+im, 'SCAMPCON', value=contnum, hdrcomment='SCAMP cont. num')
 
+def scamp_astrometry_net0(im,projection='TAN'):
+	contnum=scamp_net0(im,projection=projection)
+	headmerge(im)
+	fits.setval('sa'+im, 'FLXSCALE', value=1)
+	fits.setval('sa'+im, 'SCAMPCON', value=contnum, hdrcomment='SCAMP cont. num')
+
+
 # !swarp t.fits -c default.swarp -PROJECTION_TYPE TPV -IMAGEOUT_NAME=sat.fits
 
 '''
-for i in range(len(oklist)) :
-	contnum=scamp_net(oklist[i],projection='TAN')
-	headmerge(oklist[i])
-	fits.setval('sa'+oklist[i], 'FLXSCALE', value=1)
-	fits.setval('sa'+oklist[i], 'SCAMPCON', value=contnum, hdrcomment='SCAMP cont. num')
-	print(i+1, 'of', str(len(oklist)) )
-	print('\n')
+for j,im in enumerate(oklist) :
+	contnum=scamp_net(im,projection='TAN')
+	headmerge(im)
+	fits.setval('sa'+im, 'FLXSCALE', value=1)
+	fits.setval('sa'+im, 'SCAMPCON', value=contnum, hdrcomment='SCAMP cont. num')
+	print(j+1, 'of', len(oklist) )
+	print('='*60,'\n')
+
 salist=glob.glob('saCalib*.fits')
 salist.sort()
 print ('from oklist', len(oklist), 'salist',len(salist))

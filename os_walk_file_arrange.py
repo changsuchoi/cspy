@@ -1,3 +1,5 @@
+# file arrange, remove, rename
+
 import os
 import astropy.io.fits as fits
 

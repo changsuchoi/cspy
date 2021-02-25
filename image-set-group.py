@@ -62,7 +62,7 @@ def epoch_group(files):
 	print(lines)
 	return (lines)
 
-lines=epoch_group(oklist)
+#lines=epoch_group(oklist)
 
 
 

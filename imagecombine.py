@@ -101,9 +101,11 @@ def imagecombine_epoch(glines):
 			#	os.system('cp '+ii[0]+' '+centertimeheader(ii)[1])
 			#	puthdr(centertimeheader(ii)[1],'DATE-OBS', centertimeheader(ii)[0])
 		else:
+			print('='*60,'\n')
 			if os.path.isfile(centertimeheader(ii)[1]) : pass
 			else:
 				print(len(ii),'images will be combined', centertimeheader(ii)[1])
 				imcombine(i[:-1], centertimeheader(ii)[1])
 				puthdr(centertimeheader(ii)[1],'DATE-OBS', centertimeheader(ii)[0])
+				print('='*60,'\n')
 	os.system('rm *gregister.fits')

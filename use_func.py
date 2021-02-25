@@ -1,4 +1,4 @@
-import os,sys
+)import os,sys
 import astropy.io.fits as fits
 import astropy.io.ascii as ascii
 import numpy as np
@@ -95,6 +95,11 @@ def trim(inim, position, size, outim='trim.fits'):
 	# Write the cutout to a new FITS file
 	hdu.writeto(outim, overwrite=True)
 
+
+
+
+# running time check
+
 import time
 starttime=time.time()
 # job running
@@ -107,18 +112,48 @@ ls saCalib* | wc -l
 endtime=time.time();os.system('ls saCalib* | wc -l')
 
 
-# header check
-
+# header check and update
 import astropy.io.fits as fits
 import numpy as np
 
 keyword='EXPTIME'
-for im in salist:
+# keyword = 'DATE-OBS'
+for im in caliblist:
 	hdr=fits.getheader(im)
 	#hdr.get(keyword,default=False)
 	if keyword not in list(hdr.keys()):
 		hdrval=hdr['EXP_TIME']
 		print('header update',keyword,hdrval)
 		puthdr(im, keyword, hdrval, hdrcomment='')
+	else:pass
 
-keyword = 'DATE-OBS'
+
+
+
+# single image check from lines (image-set-group.py)
+for ii in lines:
+    iii=ii[:-1].split(',')
+    if len(iii)==1:
+        print (iii)
+
+#
+f = io.StringIO()
+with redirect_stdout(f):
+	func(arg)
+s = f.getvalue()
+
+
+
+#header keyword remove
+
+h=fits.getheader(im)
+#h.remove('PV1_0')
+
+kwds=['PV1_0', 'PV1_1', 'PV1_2', 'PV1_3', 'PV1_4', 'PV1_5',
+		'PV1_6', 'PV1_7', 'PV1_8', 'PV1_9', 'PV1_10',
+		'PV2_0', 'PV2_1', 'PV2_2', 'PV2_3', 'PV2_4', 'PV2_5',
+		'PV2_6', 'PV2_7', 'PV2_8', 'PV2_9', 'PV2_10']
+for k in kwds:
+	if k in list(h.keys()):
+		print('removing',k,h[k])
+		fits.delval(im,k)

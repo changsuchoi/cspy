@@ -95,6 +95,7 @@ def alipy_in2ref(ref_image,images_to_align):
 # ref_image=['ref.fits']
 # output name = gr_Calib-LSGT-NGC3367-20190630-084141-r-180.fits
 def alipy_ref2in(im,ref_image=['ref.fits']):
+    alipynolist=[]
     '''
     ref_image should be a list!
     like ref_image=['ref.fits']
@@ -102,17 +103,23 @@ def alipy_ref2in(im,ref_image=['ref.fits']):
     identifications= identify_transform(im, ref_image, rad= 5, nb=500, verbose=False, visual=False)
     align_images(im, identifications, iraf=True, outdir='alipy_out')
     newname = 'gr_'+os.path.splitext(im)[0]+os.path.splitext(im)[1]
-    os.system('mv alipy_out/'+os.path.splitext(ref_image[0])[0]+'_gregister'+os.path.splitext(ref_image[0])[1]+' '+newname)
+    s=os.system('mv alipy_out/'+os.path.splitext(ref_image[0])[0]+'_gregister'+os.path.splitext(ref_image[0])[1]+' '+newname)
+    if s==0 : print('Well done')
+    else:
+        print('Alipy did not worked')
+        alipynolist.append(iii)
+    print(alipynolist)
 
 
 
 
 # with open('comfiles.txt','r') as file_handle: lines = file_handle.read().splitlines()
 def alipy_epoch(lines):
+    alipynolist=[]
     for iii in lines:
         ii=iii[:-1].split(',')
         print('='*60,'\n')
-        print(lines.index(iii), 'of', len(iii))
+        print(lines.index(iii), 'of', len(lines))
         if len(ii) == 1 :
             print(ii[0], 'single image, No touch')
             #os.system('mv '+ii[0]+' gr'+ii[0])
@@ -121,15 +128,29 @@ def alipy_epoch(lines):
             ref_image=ii[0]
             images_to_align=ii
             print (len(ii), 'files will be registerd')
-            identifications= identify_transform(ref_image, images_to_align, rad= 5, nb=500, verbose=False, visual=False)
+            identifications= identify_transform(ref_image, images_to_align,
+                                rad= 5, nb=500, verbose=False, visual=False)
             align_images(ref_image, identifications, iraf=True, outdir='alipy_out')
-    os.system('mv alipy_out/*gregister.fits .')
+            s=os.system('mv alipy_out/*gregister.fits .')
+            if s==0 : print('Well done')
+            else:
+                print('Alipy did not worked')
+                alipynolist.append(iii)
+    print(alipynolist)
 
 
 #os.system('rename _gregister.fits .fits alipy_out/*gregister*')
 #os.system('rename Calib grCalib alipy_out/Calib*.fits')
 #os.system('mv alipy_out/grCalib*.fits .')
 
+
+'''
+import subprocess
+sexout = subprocess.getoutput(secommand)
+line = [s for s in sexout.split('\n') if 'RMS' in s]
+skymed = float(line[0].split('Background:')[1].split('RMS:')[0])
+skysig= float(line[0].split('RMS:')[1].split('/')[0])
+'''
 
 
 
