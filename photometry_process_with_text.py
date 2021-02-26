@@ -23,11 +23,11 @@ print ('oklist', len(oklist),'nolist', len(nolist))
 # 2. scamp-astrometry.net-result.py
 # multiprocessing cpu=4 projection='TPV'
 # return saCalib*.fits, salist
-# with cpu=4, 3 sec for 1 image process 
-# after scamp, remove PVX_X keywords in header, 
+# with cpu=4, 3 sec for 1 image process
+# after scamp, remove PVX_X keywords in header,
 # cut image less than the size of ref.fits
 for j,im in enumerate(oklist) :
-	contnum=scamp_net(im, astref=False, projection='TAN')
+	contnum=scamp_net(im, astref=False, projection='TAN',DETECT_THRESH='3')
 	headmerge(im)
 	fits.setval('sa'+im, 'FLXSCALE', value=1)
 	fits.setval('sa'+im, 'SCAMPCON', value=contnum, hdrcomment='SCAMP cont. num')
@@ -47,7 +47,7 @@ print(len(oklist),len(salist))
 # return clines, salines
 lines=epoch_group(oklist)
 salines=epoch_group(salist)
-
+len(lines),len(salines)
 # 4. alipy-python3-epoch.py
 # gregister for each epoch
 # single image check
@@ -64,6 +64,9 @@ starttime=time.time()
 alipy_epoch(lines)
 endtime=time.time()
 duration= endtime-starttime
+glist=glob.glob('Calib*gregister.fits')
+glist.sort()
+print('alipy work done', duration, len(glist))
 
 # 5. imagecombine.py
 # image combine for each epoch with Calib*gregister.fits files
@@ -73,9 +76,9 @@ glist.sort()
 glines=epoch_group(glist)
 imagecombine_epoch(glines)
 os.system('ls Calib*com.fits | wc -l')
+print('imagecombine done')
 
-
-# 6. swarprun.py 
+# 6. swarprun.py
 # image combine for each opoch which saCalib*fits files
 # EXPTIME keyword
 # return saCalib*180_com.fits
@@ -86,10 +89,11 @@ starttime=time.time()
 swarp_epoch(salines)
 endtime=time.time()
 duration= endtime-starttime
-
+print('swarp_epoch done', duration)
+os.system('ls saCalib*com.fits | wc -l')
 
 # 7. psfexrun.py
-# psfex run, get .psf files 
+# psfex run, get .psf files
 # note. MCD30INCH not good for psfex run
 # return *.psf
 fitslist=glob.glob('*Calib*.fits')
@@ -103,9 +107,8 @@ endtime=time.time()
 duration= endtime-starttime
 
 # 8. se_1st
-# se-1st-phot-function.py
-# se-1st-phot-command.py
 # optimal_aper.py
+# se-1st-phot-function.py
 # se-1st-command.py
 # sextractor run, zp, zperr, plots, se1, FWHM, pscale, ul, skyval, skysig
 # return *.se1, *.png, header update
@@ -123,19 +126,43 @@ magtypes=['MAG_AUTO', 'MAG_PSF',
 magtype=magtypes[0]
 refcat='../../ps1-Tonry-NGC3367.cat'
 psf=True
-
-imlist=glob.glob('Calib*.fits')
+imlist=glob.glob('*Calib*.fits')
+# multiprocess
+'''
 imlist.sort()
-cpunum=10
+cpunum=2
 if __name__ == '__main__' :
 	p=Pool(cpunum)
 	p.map(se1st,imlist)
-
+'''
+#single
+stime=time.time()
+badlist=[]
+for nn,im in enumerate(imlist) :
+	print('=' *60,'\n')
+	print(nn+1, 'of ',len(imlist),im)
+	if fits.getheader(im).get('UL5_OPTA',default=True):
+		try : se1st(im)
+		except:
+			print(im,'has a problem, add it to badlist')
+			badlist.append(im)
+	else: pass
+print(badlist)
+etime=time.time()
+duration=etime-stime
+print('se_1st done', len(imlist), duration)
 #starttime=time.time()
 #se1st(im)
 #endtime=time.time()
 #duration= endtime-starttime
 # 16sec for 1 image
+
+# return badlist, and zp related values in header, plots(zp, error, ul5, fov)
+# in badlist, saCalib*.fits are major files because 'PV1_5' ~ 'PV1_10' keyword
+# remove keywords in header and run se1st again
+# number of images must be same (Calib = saCalib) only due to image quality.
+delhdrkey
+
 
 # 9.se_2nd
 # se-2nd-phot-function.py

@@ -85,12 +85,12 @@ def oswalknamesep(i):
        'Unnamed: 23']
 '''
 
-snlist=pd.read_csv('/data7/cschoi/sngal/recent-sne-check/rochester-list/matched_list_2018_2020.csv') 
-telescopes=['DOAO','LOAO','CCA250','LSGT','MCD30INCH','SOAO','MAO','KCT','SAO','ELSAUSE','SQUEAN','UKIRT']
+snlist=pd.read_csv('/data7/cschoi/sngal/recent-sne-check/rochester-list/matched_list_2018_2020.csv')
+telescopes=['DOAO','LOAO','CCA250','LSGT','MCD30INCH','SOAO','MAO','KCT','SAO','ELSAUSE','SQUEAN','UKIRT','itelescope']
 
 data_directory='/data7/cschoi/IMSNGgalaxies/'
-snhost=snlist['    IMSNGname ']   
-snname=snlist['                           Name '] 
+snhost=snlist['    IMSNGname ']
+snname=snlist['                           Name ']
 sndiscovery=snlist['  Discovery_date ']
 sntype=snlist['        Type ']
 snsep=snlist[' separation ']
@@ -103,41 +103,41 @@ snsep=snlist[' separation ']
 
 os.chdir(data_directory+str.strip(snhost[i]))
 
-lines= oswalkfunc() 
-lines.sort() 
-fitslist= [s for s in lines if s.split('/')[-1][-5:]=='.fits' and s.split('/')[-1][:6] =='Calib-']  
+lines= oswalkfunc()
+lines.sort()
+fitslist= [s for s in lines if s.split('/')[-1][-5:]=='.fits' and s.split('/')[-1][:6] =='Calib-']
 
 datelist=[]
 obslist=[]
 filterlist=[]
 mjd=[]
-for n in fitslist : 
+for n in fitslist :
 	datelist.append(n.split('/')[-1].split('-')[3])
-	if  n.split('/')[-1].split('-')[3][:2] != '20' : 
+	if  n.split('/')[-1].split('-')[3][:2] != '20' :
 		print( n)
-	obslist.append(n.split('/')[-1].split('-')[1]) 
+	obslist.append(n.split('/')[-1].split('-')[1])
 	filterlist.append(n.split('/')[-1].split('-')[5])
 
 #	mjd.append(fits.getheader(n)['MJD'])
-#   !rename SAO-STX16803 SAO_STX16803 SAO/STX16803/*/*.fits 
-#   !rename T21-ceouobs.changsu T21_ceouobs.changsu itelescope/*/*.fits 
+#   !rename SAO-STX16803 SAO_STX16803 SAO/STX16803/*/*.fits
+#   !rename T21-ceouobs.changsu T21_ceouobs.changsu itelescope/*/*.fits
 #   !rename NGC5353-190 NGC5353-20190 UKIRT/*.fits
-set(obslist) 
+set(obslist)
 set(filterlist)
 
 
 datelist_value = [datetime.datetime.strptime(d,'%Y%m%d').date() for d in datelist]
 
 newobslist=[]
-for obs in obslist : 
+for obs in obslist :
 	if obs[:3] == 'SOA' : newobslist.append('SOAO')
-	elif obs[:3] == 'DOA' : newobslist.append('DOAO') 
+	elif obs[:3] == 'DOA' : newobslist.append('DOAO')
 	elif obs[:3] == 'MAI' : newobslist.append('MAO')
 	elif obs[:3] == 'MAO' : newobslist.append('MAO')
-	elif obs[:3] == 'Mai' : newobslist.append('MAO') 
+	elif obs[:3] == 'Mai' : newobslist.append('MAO')
 	elif obs[:3] == 'SAO'  : newobslist.append('SAO')
-	elif obs[:3] == 'KCT'  : newobslist.append('KCT') 
-	elif obs[:3] == 'MCD'  : newobslist.append('MCD30INCH') 
+	elif obs[:3] == 'KCT'  : newobslist.append('KCT')
+	elif obs[:3] == 'MCD'  : newobslist.append('MCD30INCH')
 	else : newobslist.append(obs)
 
 fig, ax = plt.subplots()
@@ -176,6 +176,3 @@ ax.xaxis.set_tick_params(rotation=90, labelsize=10)
 plt.tight_layout()
 plt.savefig('/data7/cschoi/sngal/'+str.strip(snhost[i])+'_'+str.strip(snname[i])+'.png',dpi=500,overwrite=True)
 plt.close()
-
-
-

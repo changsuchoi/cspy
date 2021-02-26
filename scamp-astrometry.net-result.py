@@ -21,6 +21,7 @@ astcodedirec   = '/data7/cschoi/code/cspy/astrom/astromtest/'
 astseconfig    = astcodedirec+'astrom.sex'
 astseparam     = astcodedirec+'astrom.par'
 astscampconfig = astcodedirec+'astrom.scamp'
+astswarpconfig = astcodedirec+'astrom.swarp'
 
 # input file name
 #i = 'Calibrated-LOAO-NGC3367-20180707-034519-R-60.fits'
@@ -32,13 +33,14 @@ astscampconfig = astcodedirec+'astrom.scamp'
 #imlist.sort()
 #for img in imlist: print(img)
 
-def scamp_net(i,astref=False,projection='TAN'):
+def scamp_net(i,astref=False,projection='TAN',DETECT_THRESH='3'):
 	newname='sa'+i
 	print('='*60, '\n')
 	#os.system('cp '+i+' '+newname)
 	iname = i.split('.')[0]
 	# source extractor
-	secom = 'sex '+i+' -c '+astseconfig+' -PARAMETERS_NAME '+astseparam+' -CATALOG_NAME '+iname+'.ldac'
+	secom = 'sex '+i+' -c '+astseconfig+' -PARAMETERS_NAME '+astseparam+\
+			' -CATALOG_NAME '+iname+'.ldac '+' -DETECT_THRESH '+DETECT_THRESH
 	seout = subprocess.getoutput(secom)
 	line1 = [s for s in seout.split('\n') if 'RMS' in s]
 	line2 = [s for s in seout.split('\n') if 'Objects: detected' in s]
@@ -49,7 +51,6 @@ def scamp_net(i,astref=False,projection='TAN'):
 	# scamp
 	print('scamp working ...')
 	opt1= ' -ASTREF_CATALOG GAIA-EDR3 -SAVE_REFCATALOG Y'
-	opt1= ' -ASTREF_CATALOG FILE -ASTREFCAT_NAME '+astref
 	opt1a=' -ASTREFCAT_NAME astrefcat.cat'
 	opt2= ' -CROSSID_RADIUS 2.0'
 	opt3= ' -PIXSCALE_MAXERR 1.2'             # Max scale-factor uncertainty
@@ -65,6 +66,11 @@ def scamp_net(i,astref=False,projection='TAN'):
 	scampcoma='scamp -c '+astscampconfig+' '+iname+'.ldac'+' -ASTREF_CATALOG GAIA-EDR3'+ opt9
 	scampcomb='scamp -c '+astscampconfig+' '+iname+'.ldac'+opt1+opt9
 	scampcom1='scamp -c '+astscampconfig+' '+iname+'.ldac'+' -ASTREF_CATALOG GAIA-EDR3 -SAVE_REFCATALOG Y '+opt9
+	if astref==False: scampcom=scampcoma
+	else :
+		opt1= ' -ASTREF_CATALOG FILE -ASTREFCAT_NAME '+astref
+		scampcomb='scamp -c '+astscampconfig+' '+iname+'.ldac'+opt1+opt9
+		scampcom=scampcomb
 	print(scampcom)
 	scampout=subprocess.getoutput(scampcom)
 	line1=[s for s in scampout.split('\n') if 'cont.' in s]
@@ -75,14 +81,15 @@ def scamp_net(i,astref=False,projection='TAN'):
 	os.system('rm '+iname+'.ldac')
 	return(contnum)
 
-def scamp_net0(i,projection='TAN'):
+def scamp_net0(i,projection='TAN',DETECT_THRESH='3'):
 	#save refcat used for scamp
 	newname='sa'+i
 	print('='*60, '\n')
 	#os.system('cp '+i+' '+newname)
 	iname = i.split('.')[0]
 	# source extractor
-	secom = 'sex '+i+' -c '+astseconfig+' -PARAMETERS_NAME '+astseparam+' -CATALOG_NAME '+iname+'.ldac'
+	secom = 'sex '+i+' -c '+astseconfig+' -PARAMETERS_NAME '+astseparam+\
+			' -CATALOG_NAME '+iname+'.ldac '+' -DETECT_THRESH '+DETECT_THRESH
 	seout = subprocess.getoutput(secom)
 	line1 = [s for s in seout.split('\n') if 'RMS' in s]
 	line2 = [s for s in seout.split('\n') if 'Objects: detected' in s]
@@ -110,7 +117,7 @@ def scamp_net0(i,projection='TAN'):
 	line1=[s for s in scampout.split('\n') if 'cont.' in s]
 	contnum = scampout.split(line1[0])[1].split('\n')[1].split(' ')[11]
 	contnum = scampout.split(line1[0])[1].split('\n')[1].split('"')[1].split(' ')[3]
-	print('cont.',contnum)
+	print('cont.',contnum,'if greater than 2.5, it was successful')
 	print('Save the astrometry reference cat file, find GAIA*.cat')
 	print('='*60, '\n')
 	os.system('rm '+iname+'.ldac')
@@ -167,15 +174,34 @@ fits.writeto('a'+inim,fits.getdata(inim),hdr1)
 #f=open('scamp_net_result.txt','w')
 # scamp_net(iii)
 # headmerge(iii)
-def scamp_astrometry_net(im,astref=False,projection='TAN'):
-	contnum=scamp_net(im,astref=astref,projection=projection)
+def scamp_astrometry_net(im, astref=False,projection='TAN',DETECT_THRESH='3'):
+	contnum=scamp_net(im, astref=astref,projection=projection,DETECT_THRESH='3')
 	headmerge(im)
 	fits.setval('sa'+im, 'FLXSCALE', value=1)
 	fits.setval('sa'+im, 'SCAMPCON', value=contnum, hdrcomment='SCAMP cont. num')
 
-def scamp_astrometry_net0(im,projection='TAN'):
-	contnum=scamp_net0(im,projection=projection)
+def scamp_astrometry_net0(im,projection='TAN',DETECT_THRESH='3'):
+	contnum=scamp_net0(im,projection=projection,DETECT_THRESH='3')
 	headmerge(im)
+	fits.setval('sa'+im, 'FLXSCALE', value=1)
+	fits.setval('sa'+im, 'SCAMPCON', value=contnum, hdrcomment='SCAMP cont. num')
+
+#using astrometry reference file
+# save ASTREF_CATLOG GAIA-EDR3*.cat
+'''
+scamp_astrometry_net0('ref.fits',projection='TAN')
+gaia=glob.glob('GAIA*.cat')[0]
+for i,im in enumerate(oklist[1:]):
+	print('='*60)
+	print (i+1, 'of' ,len (oklist[1:]))
+	scamp_astrometry_net(im,astref=gaia,projection='TAN')
+'''
+
+# for non astrometry.net result, like scamp result already done before
+def scamp_non_astrometry_net(im, projection='TAN'):
+	contnum=scamp_net(im, astref=False, projection=projection)
+	swarpcom='swarp -c '+astswarpconfig+' '+im+' -IMAGEOUT_NAME sa'+im
+	os.system(swarpcom)
 	fits.setval('sa'+im, 'FLXSCALE', value=1)
 	fits.setval('sa'+im, 'SCAMPCON', value=contnum, hdrcomment='SCAMP cont. num')
 

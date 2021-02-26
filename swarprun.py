@@ -99,7 +99,9 @@ salist.sort()
 salines=epoch_group(salist)
 #salines[-1][:-1].split(',')
 def swarp_epoch(salines):
-	for i in salines:
+	for n,i in enumerate(salines):
+		print('='*60,'\n')
+		print(n,'of',len(salines))
 		ii=i[:-1].split(',')
 		if len(ii)==1 :
 			print("single image, PASS")

@@ -115,7 +115,7 @@ endtime=time.time();os.system('ls saCalib* | wc -l')
 # header check and update
 import astropy.io.fits as fits
 import numpy as np
-
+os.system('gethead *Calib*.fits DATE-OBS EXPTIME')
 keyword='EXPTIME'
 # keyword = 'DATE-OBS'
 for im in caliblist:
@@ -126,9 +126,21 @@ for im in caliblist:
 		print('header update',keyword,hdrval)
 		puthdr(im, keyword, hdrval, hdrcomment='')
 	else:pass
+keyword='DATE-OBS'
+fixlist=[]
+for im in flist:
+	hdr=fits.getheader(im)
+	if len(hdr[keyword]) < 19 :
+		print(im)
+		fixlist.append(im)
 
 
-
+# MCD30ICH DATE-OBS fix
+dateobs=fits.getheader(im)['DATE-OBS']+'T'+fits.getheader(im)['UT']
+puthdr(im,'DATE-OBS',dateobs)
+# SOAO DATE-OBS fix
+dateobs=fits.getheader(im)['DATE-OBS']+'T'+fits.getheader(im)['TIME-OBS']
+puthdr(im,'DATE-OBS',dateobs)
 
 # single image check from lines (image-set-group.py)
 for ii in lines:
@@ -136,24 +148,29 @@ for ii in lines:
     if len(iii)==1:
         print (iii)
 
-#
+# stdout
+'''
 f = io.StringIO()
 with redirect_stdout(f):
 	func(arg)
 s = f.getvalue()
-
+'''
 
 
 #header keyword remove
 
-h=fits.getheader(im)
+
 #h.remove('PV1_0')
 
 kwds=['PV1_0', 'PV1_1', 'PV1_2', 'PV1_3', 'PV1_4', 'PV1_5',
 		'PV1_6', 'PV1_7', 'PV1_8', 'PV1_9', 'PV1_10',
 		'PV2_0', 'PV2_1', 'PV2_2', 'PV2_3', 'PV2_4', 'PV2_5',
 		'PV2_6', 'PV2_7', 'PV2_8', 'PV2_9', 'PV2_10']
-for k in kwds:
-	if k in list(h.keys()):
-		print('removing',k,h[k])
-		fits.delval(im,k)
+
+kwds=['PV1_5', 'PV1_6', 'PV1_7', 'PV1_8', 'PV1_9', 'PV1_10']
+def delhdrkey(im,kwds=kwds):
+	h=fits.getheader(im)
+	for k in kwds:
+		if k in list(h.keys()):
+			print('removing',k,h[k])
+			fits.delval(im,k)
