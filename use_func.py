@@ -112,35 +112,7 @@ ls saCalib* | wc -l
 endtime=time.time();os.system('ls saCalib* | wc -l')
 
 
-# header check and update
-import astropy.io.fits as fits
-import numpy as np
-os.system('gethead *Calib*.fits DATE-OBS EXPTIME')
-keyword='EXPTIME'
-# keyword = 'DATE-OBS'
-for im in caliblist:
-	hdr=fits.getheader(im)
-	#hdr.get(keyword,default=False)
-	if keyword not in list(hdr.keys()):
-		hdrval=hdr['EXP_TIME']
-		print('header update',keyword,hdrval)
-		puthdr(im, keyword, hdrval, hdrcomment='')
-	else:pass
-keyword='DATE-OBS'
-fixlist=[]
-for im in flist:
-	hdr=fits.getheader(im)
-	if len(hdr[keyword]) < 19 :
-		print(im)
-		fixlist.append(im)
 
-
-# MCD30ICH DATE-OBS fix
-dateobs=fits.getheader(im)['DATE-OBS']+'T'+fits.getheader(im)['UT']
-puthdr(im,'DATE-OBS',dateobs)
-# SOAO DATE-OBS fix
-dateobs=fits.getheader(im)['DATE-OBS']+'T'+fits.getheader(im)['TIME-OBS']
-puthdr(im,'DATE-OBS',dateobs)
 
 # single image check from lines (image-set-group.py)
 for ii in lines:
@@ -174,3 +146,11 @@ def delhdrkey(im,kwds=kwds):
 		if k in list(h.keys()):
 			print('removing',k,h[k])
 			fits.delval(im,k)
+
+
+badlist=[]
+for a,b zip(imlist,result):
+	if b==None:
+		print(a,b)
+		badlist.append(a)
+print badlist

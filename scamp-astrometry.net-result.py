@@ -174,12 +174,13 @@ fits.writeto('a'+inim,fits.getdata(inim),hdr1)
 #f=open('scamp_net_result.txt','w')
 # scamp_net(iii)
 # headmerge(iii)
-def scamp_astrometry_net(im, astref=False,projection='TAN',DETECT_THRESH='3'):
+def scamp_astrometry_net(im, astref=False, projection='TAN',DETECT_THRESH='3'):
 	contnum=scamp_net(im, astref=astref,projection=projection,DETECT_THRESH='3')
 	headmerge(im)
 	fits.setval('sa'+im, 'FLXSCALE', value=1)
 	fits.setval('sa'+im, 'SCAMPCON', value=contnum, hdrcomment='SCAMP cont. num')
-
+	return 'done'
+	
 def scamp_astrometry_net0(im,projection='TAN',DETECT_THRESH='3'):
 	contnum=scamp_net0(im,projection=projection,DETECT_THRESH='3')
 	headmerge(im)

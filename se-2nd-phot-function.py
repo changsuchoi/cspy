@@ -26,9 +26,10 @@ DETECT_THRESH  = str(1.5)
 DEBLEND_NTHRESH = str(32)
 DEBLEND_MINCONT = str(0.005)
 
-psf=False
+psf=True
 # source extractor command
 def se2com(im,psf=psf):
+	os.system('rm *Calib*_seg.fits *Calib*_ap.fits')
 	PSCALE=fits.getheader(im)['PSCALE']
 	fwhm_pix=fits.getheader(im)['FWHM_PIX']
 	opt_ap=fits.getheader(im)['OPT_AP']

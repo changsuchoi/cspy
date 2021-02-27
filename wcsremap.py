@@ -34,6 +34,7 @@ def wcsremap(im,refim='ref.fits'):
     	# match to input image
 		os.system(wcsremapstr)
 		print (outim,'is created')
+	return 'Done'
 
 
 

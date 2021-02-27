@@ -72,7 +72,7 @@ def se2com(im,psf=psf):
 
 
 # for subtracted images
-psf=True
+psf=False
 # se_sub(im,psf=psf)
 def se_sub(im,psf=psf,dual=False,det=False):
 	PSCALE=fits.getheader(im)['PSCALE']

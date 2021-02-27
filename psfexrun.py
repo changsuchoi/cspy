@@ -70,6 +70,7 @@ def psfex(i):
 	psfexcom = 'psfex -c '+psfexconfigdir+'default.psfex '+fn+'.cat'+opt1+opt6+opt4
 	os.system(presecom)
 	os.system(psfexcom)
+	os.system('rm '+fn+'.cat)
 	print (i, ' fwhm value is ', psfexxml(fn+'.psfex.xml'))
 	#imcopy('snap_'+i,'psf-'+i)
 	#imcopycom='imcopy snap_'+i+'[100:125,100:125] psf-'+i
@@ -80,6 +81,7 @@ def psfexrun(im):
 	if os.path.isfile(os.path.splitext(im)[0]+'.psf') : pass
 	else: psfex(im)
 	os.system('rm *psfex.xml')
+	return 'Done'
 
 inlist=glob.glob("*Calib*.fits")
 inlist.sort()
