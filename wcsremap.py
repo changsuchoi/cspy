@@ -32,6 +32,15 @@ def pixelscale(i):
 	#print('Pixel scale =', pixscale,'\"')
 	return pixscale
 
+def remap2min(salist, refim='ref.fits'):
+	os.system('rm remap_'+refim)
+	import astropy.io.fits as fits
+	import numpy as np
+	pslist=[fits.getheader(s)['PSCALE'] for s in salist]
+	print('the least pixelscale =',np.min(pslist))
+	os.system('remap -v -p '+str(np.min(pslist)-0.001)+' -o remap_'+refim+' '+refim)
+	print('remap_'+refim, pixelscale('remap_'+refim))
+
 def wcsremap(im,refim='ref.fits'):
 	#print inim
 	outim='rew_'+im
@@ -48,19 +57,24 @@ def wcsremap(im,refim='ref.fits'):
 			os.system(wcsremapstr)
 			print (outim,'is created')
 		except: return None
-		return 'Done'
+		return 'Normal'
 	else :
 		print('WCSTools remap and run wcsremap')
-		os.system('rm '+'remap_'+refim)
-		os.system('remap -v -p '+str(pixelscale(im)-0.01)+' -o remap_'+refim+' '+refim)
-		print('image pixel scale < ref pixelscale', pixelscale(im), '>=', pixelscale(refim))
-		print('WCSTools remap and run wcsremap')
-		wcsremapstr='wcsremap -template '+im+' -source '+'remap_'+refim+' -outIm '+outim
-		try:
-			os.system(wcsremapstr)
-			print (outim,'is created')
-		except: return None
-		return 'Done'
+		# os.system('rm '+'remap_'+refim)
+		if os.path.isfile('remap_'+refim):
+			if pixelscale(im) >= pixelscale('remap_'+refim):
+				print('image pixel scale < ref pixelscale', pixelscale(im), '>=', pixelscale(refim))
+				print('WCSTools remap and run wcsremap', pixelscale(im),pixelscale('remap_'+refim))
+				wcsremapstr='wcsremap -template '+im+' -source '+'remap_'+refim+' -outIm '+outim
+				try:
+					os.system(wcsremapstr)
+					print (outim,'is created')
+				except: return None
+
+		else:
+			print('make least pixelscale remap_ref.fits first!')
+			return None
+
 
 
 #wcstools remap

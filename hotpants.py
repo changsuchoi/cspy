@@ -41,33 +41,41 @@ def hotpantsrun(im, regrefim, il=0, iu=65000, tl=0, tu=65000, sigmatch=False):
 	#	print('FWHM_INPUT',fwhm_im,'FWHM_REF',fwhm_ref)
 	#	com= 'hotpants -v 0 -inim '+regrefim+' -tmplim '+im+\
 	#		' -outim '+outfile+' -n t -c i' +' -oci '+convfile +opt1+opt2+opt3+opt4+opt5
-head='rew_'
-def hprun(im, refim='ref.fits', il=0, iu=65000, tl=0, tu=65000, sigmatch=False):
-	#use sigmatch=True when
-	#refim = 'ref.fits'
+
+def hprun(im, refim='reg_'+im, il=0, iu=65000, tl=0, tu=65000, sigmatch=False):
+	print(im, refim)
+	#use sigmatch=True when fwhm values are significantly different.
+	#refim = 'ref.fits' : default
 	outfile='hd'+im
 	convfile='hc'+im
-	kernelfile='hk'+im
+	os.system('rm '+outfile+' '+convfile)
+	#kernelfile='hk'+im
 	# for pan starrs image subtraction set tu, tl more than 100000, -100000
 	opt0=' -n t -c i'
 	opt0a=' -n i -c t'
 	opt1=' -il ' + str(il) +' -iu '+ str(iu)+ ' '
 	opt2=' -tl ' + str(tl) +' -tu '+ str(tu)+ ' '
 	opt3=' -ng 3 6 0.70 4 1.50 2 3.00'
-	opt4=' -oki '+kernelfile+' '
+	#opt4=' -oki '+kernelfile+' '
 	opt5=' -hki '
 	# opt6=' -ig ' + str(ig) +' -ir '+ str(ir)+ ' ' # gain,rdnoise option
 	# opt7=' -tg ' + str(tg) +' -tr '+ str(tr)+ ' ' # gain,rdnoise option
 	# in the case of Sigma_image > Sigma_template, for better subtraction, you may try this option
 	# FWHM = 2.355 sigma
-	fwhm_im=fits.getheader(im)['FWHM_PIX']
-	fwhm_reg=fits.getheader(refim)['FWHM_PIX']
+	#fwhm_im=fits.getheader(im)['FWHM_PIX']
+	#fwhm_reg=fits.getheader(refim)['FWHM_PIX']
+	#print('input image fwhm',fwhm_im, 'ref image fwhm',fwhm_reg)
 	#com= 'hotpants -v 0 -inim '+regrefim+' -tmplim '+im+\
 	#	' -outim '+outfile+opt0 +' -oci '+convfile +opt1+opt2+opt3+opt4+opt5
 	com= 'hotpants -v 0 -inim '+im+' -tmplim '+refim+\
-		' -outim '+outfile + opt0a +' -oci '+ convfile +opt1+opt2#+opt3#+opt4
+		' -outim '+outfile + opt0a +' -oci '+ convfile +opt1+opt2+opt3#+opt4
 	print(com)
-	os.system(com)
+	try:
+		os.system(com)
+		return 'Done'
+	except : return None
+
+
 	#if fwhm_im > fwhm_reg :
 	#	com= 'hotpants -v 0 -inim '+regrefim+' -tmplim '+im+\
 	#		' -outim '+outfile+' -n t -c i' +' -oci '+convfile +opt1+opt2+opt3+opt4+opt5

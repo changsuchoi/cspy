@@ -164,3 +164,6 @@ for result in map(func, arg0)
 result=map(func,args)
 print(list(result))
 # lambda
+
+
+from itertools import repeat

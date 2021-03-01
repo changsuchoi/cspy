@@ -39,7 +39,7 @@ for j,im in enumerate(oklist) :
 # multi core with parmap
 import parmap
 stime=time.time()
-cpunum=20
+cpunum=5
 result=parmap.map(scamp_astrometry_net, oklist, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
@@ -214,7 +214,7 @@ for i in badlist:
 ''' 9.se_2nd '''
 # se-2nd-phot-function.py
 # return *.sef (threshold 1.5), *.dat (final catalog)
-imlist=glob.glob('*Calib*.fits')
+imlist=glob.glob('saCalib*.fits')
 imlist.sort()
 print(len(imlist))
 os.system('rm *Calib*_seg.fits *Calib*_ap.fits')
@@ -249,11 +249,11 @@ os.system('rm *.ap.fits *seg.fits')
 # imcopy
 #for im in imlist:
 #	imcopy(im,position=(ra,dec))
-os.system('rm Calib*cut.fits')
+os.system('rm *Calib*cut.fits')
 size = 10 # arcmin unit, length of square side
 ra,dec=161.645641, 13.750859
 positions=(161.645641, 13.750859)
-callist=glob.glob('Calib*.fits')
+callist=glob.glob('*Calib*.fits')
 callist.sort()
 stime=time.time()
 cpunum=3
@@ -268,10 +268,12 @@ Error in write: Select error for <Subprocess '/data7/cschoi/util/iraf-2.16.1-201
 [Errno 32] Broken pipe
 '''
 # trim
+sz=(10,10)
+pos=(161.645641, 13.750859)
 salist=glob.glob('saCalib*.fits')
 salist.sort()
 stime=time.time()
-cpunum=3
+cpunum=5
 result=parmap.map(trim, salist, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
@@ -282,8 +284,8 @@ print('trim image cut done', len(salist),len(cutsalist), duration/60)
 ''' 11.1 alipy-ref2in '''
 # registration ref.fits to iuput image, single 2.5sec
 # return reg_Calib*.fits
-cutcallist=glob.glob('Calib*cut.fits')
-cutcallist.sort()
+salist=glob.glob('saCalib*.fits')
+salist.sort()
 stime=time.time()
 cpunum=3
 result=parmap.map(alipy_ref2in, cutsalist, pm_pbar=True, pm_processes=cpunum)
@@ -291,20 +293,51 @@ etime=time.time()
 duration=etime-stime
 regcutsalist=glob.glob('reg_saCalib*cut.fits')
 print('alipy_ref2in done', len(cutsalist),len(regcutsalist), duration/60)
-#for im in cutlist:
-#	alipy_ref2in(im)
+
+#single core
+salist=glob.glob('saCalib*.fits')
+salist.sort()
+result,nolist=[],[]
+for n,im in enumerate(salist):
+	print(n+1, 'of', len(salist))
+	r=alipy_ref2in(im)
+	if r==None:nolist.append(im)
+	result.append(r)
+print(len(salist),len(nolist))
 
 ''' 11.2 wcsremap.py '''
 # registration ref.fits to input cut file
 # return rew_*Calib*cut.fits
-cutlist=glob.glob('saCalib*cut.fits')
-cutlist.sort()
+# remap2min : remap ref.fits to have the the pixelscale value (least pixel scale -0.001)
+salist=glob.glob('saCalib*.fits')
+salist.sort()
+remap2min(salist, refim='ref.fits')
 stime=time.time()
-cpunum=5
-result=parmap.map(wcsremap, cutlist, pm_pbar=True, pm_processes=cpunum)
+cpunum=10
+result=parmap.map(wcsremap, salist, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
-print('wcsremap done', len(cutlist), duration/60)
+rewlist=glob.glob('rew_saCalib*.fits')
+print('wcsremap done', len(salist),len(rewlist) ,duration/60)
+
+''' 11.3 spalipy '''
+# registration ref.fits to input cut file
+# return res_*Calib*cut.fits
+salist=glob.glob('saCalib*.fits')
+salist.sort()
+#remap2min(salist, refim='ref.fits')
+stime=time.time()
+cpunum=5
+result=parmap.map(spalipy, salist, pm_pbar=True, pm_processes=cpunum)
+etime=time.time()
+duration=etime-stime
+rewlist=glob.glob('res_saCalib*.fits')
+print('spalipy done', len(salist),len(rewlist) ,duration/60)
+
+# list comprehension
+#fitslist=glob.glob('*Calib*fits')
+#salist=[s for s in fitslist if 'saCalib' in s and 'cut' not in s]
+#sacutlist=[s for s in fitslist if 'saCalib' in s and 'cut' in s]
 
 #for im in cutlist:
 #	wcsremap(im)
@@ -313,13 +346,12 @@ print('wcsremap done', len(cutlist), duration/60)
 # subtraction
 # return hd*,hc*.fits
 # imlist, cutlist
-cutlist=glob.glob('Calib*cut.fits')
-reflist=glob.glob('reg_Calib*cut.fits')
-cutlist.sort()
-head='rew_'
+salist=glob.glob('saCalib*.fits')
+salist.sort()
+#reflist=reflist=['rew_'+s for s in salist]
 stime=time.time()
-cpunum=2
-result=parmap.map(hprun, cutsalist, pm_pbar=True, pm_processes=cpunum)
+cpunum=3
+result=parmap.map(hprun, salist, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
 hdlist=glob.glob('hd*.fits')

@@ -16,8 +16,11 @@ import astropy.wcs.utils as wcsutils
 import os,sys
 import glob
 from astropy.nddata import Cutout2D
-from astropy import units as u
-import numpy as np
+from astropy.coordinates import SkyCoord
+from astropy.coordinates import ICRS, Galactic, FK4, FK5
+from astropy.coordinates import Angle, Latitude, Longitude
+import astropy.units as u
+import astropy.coordinates as coord
 
 #im=sys.argv[1]
 #infile=sorted(glob.glob(im))
@@ -32,7 +35,7 @@ import numpy as np
 #ra, dec = 197.47311, -23.368377
 size = 10 # arcmin unit, length of square side
 ra,dec=161.645641, 13.750859
-position=(False,False)
+positions=(False,False)
 def imcopy(im,size=size,positions=positions):
 	'''
 	size=10
@@ -84,22 +87,14 @@ def radec_center(im):
 	racent, deccent = racent.item(), deccent.item()
 	return rastr,decstr,racent,deccent
 
-positions=(False,False)
-sizes=(10,10)
-def trim(inim, positions=positions, sizes=sizes):
+pos=(False,False)
+pos=(161.645641, 13.750859)
+sz=(10,10)
+def trim(inim, positions=pos, sizes=sz):
 	'''
 	positions=(ra,dec) in deg unit
 	sizes=(px,py) in pixel unit
 	'''
-	from astropy.nddata import Cutout2D
-	from astropy.wcs import WCS
-	from astropy.coordinates import SkyCoord
-	from astropy.coordinates import ICRS, Galactic, FK4, FK5
-	from astropy.coordinates import Angle, Latitude, Longitude
-	from astropy.io import fits
-	import astropy.units as u
-	import astropy.coordinates as coord
-	import numpy as np
 	hdu = fits.open(inim)[0]
 	hdr=hdu.header
 	w = WCS(hdu.header)
@@ -112,13 +107,13 @@ def trim(inim, positions=positions, sizes=sizes):
 	else : print('Input center position(deg)',positions)
 	xpscale,ypscale=wcsutils.proj_plane_pixel_scales(w)*3600
 	pixscale=(xpscale+ypscale)/2.
-	sizes=u.Quantity((10,10),u.arcmin)
+	size=u.Quantity(sizes,u.arcmin)
 	#sizes=(int(round(sizes[0]*60/pixscale)),int(round(sizes[1]*60/pixscale)))
-	print('sizes',sizes)
+	print('sizes',size)
 	positions=SkyCoord(positions[0]*u.deg, positions[1]*u.deg)
 	# Load the image and the WCS
 	# Make the cutout, including the WCS
-	cutout = Cutout2D(hdu.data, position=positions, size=sizes, wcs=w,
+	cutout = Cutout2D(hdu.data, position=positions, size=size, wcs=w,
 					mode='trim',fill_value=1.0e-30)
 	# Put the cutout image in the FITS HDU
 	hdu.data = cutout.data

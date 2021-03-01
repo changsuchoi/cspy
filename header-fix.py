@@ -58,9 +58,9 @@ def delhdrkey(im,kwds=kwds):
 			print('removing',k,h[k])
 			fits.delval(im,k)
 
-for im in imlist:
-	print(im)
-	delhdrkey(im)
+#for im in imlist:
+#	print(im)
+#	delhdrkey(im)
 
 kwds=['REFCAT',  'LOWMAG' ,'HIGHMAG',
 'NUM_AUTO','ZP_AUTO' ,'ZPE_AUTO','UL5_AUTO',
@@ -77,6 +77,7 @@ kwds=['REFCAT',  'LOWMAG' ,'HIGHMAG',
 #for im in imlist:
 #	print(im)
 #	delhdrkey(im,kwds=sekwd)
+'''
 import parmap
 imlist.sort()
 stime=time.time()
@@ -85,6 +86,7 @@ result=parmap.map(delhdrkey, imlist, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
 print('header fix done', len(imlist), duration/60)
+'''
 
 # header check and update
 '''

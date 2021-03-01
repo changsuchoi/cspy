@@ -54,37 +54,136 @@ def secom_spalipy(im):
 	os.system(secommand)
 	return ascii.read(fn+'.spl')
 
+def spalipy(im, refim='ref.fits'):
+	#register ref.fits to input image im
+	newname='res_'+im
+	if os.path.isfile(newname): os.system('rm '+newname)
+	# source_data = fits.getdata("source.fits")
+	# template_data = fits.getdata("template.fits")
+	source_data,refhdr = fits.getdata(refim,header=True)
+	template_data = fits.getdata(im)
 
-# source_data = fits.getdata("source.fits")
-# template_data = fits.getdata("template.fits")
-source_data = fits.getdata(refim)
-template_data = fits.getdata(im)
-
-# Run sep on each set of data
-# ...
-# source_extracted = sep.extract(...)
-# template_extracted = sep.extract(...)
-#source_det = Table(source_extracted)
-#template_det = Table(template_extracted)
-source_det = secom_spalipy(refim)
-template_det = secom_spalipy(im)
-source_det.rename_column('X_IMAGE','x')
-source_det.rename_column('Y_IMAGE','y')
-source_det.rename_column('FLUX_AUTO','flux')
-source_det.rename_column('FWHM_IMAGE','fwhm')
-source_det.rename_column('FLAGS','flag')
-
-template_det.rename_column('X_IMAGE','x')
-template_det.rename_column('Y_IMAGE','y')
-template_det.rename_column('FLUX_AUTO','flux')
-template_det.rename_column('FWHM_IMAGE','fwhm')
-template_det.rename_column('FLAGS','flag')
-
-sp0 = sp(source_data, source_det=source_det, template_det=template_det)
-sp0.align()
-fits.writeto("source_aligned.fits", data=sp.aligned_data)
+	# Run sep on each set of data
+	# ...
+	# source_extracted = sep.extract(...)
+	# template_extracted = sep.extract(...)
+	#source_det = Table(source_extracted)
+	#template_det = Table(template_extracted)
+	source_det = secom_spalipy(refim)
+	template_det = secom_spalipy(im)
+	source_det.rename_column('X_IMAGE','x')
+	source_det.rename_column('Y_IMAGE','y')
+	source_det.rename_column('FLUX_AUTO','flux')
+	source_det.rename_column('FWHM_IMAGE','fwhm')
+	source_det.rename_column('FLAGS','flag')
+	template_det.rename_column('X_IMAGE','x')
+	template_det.rename_column('Y_IMAGE','y')
+	template_det.rename_column('FLUX_AUTO','flux')
+	template_det.rename_column('FWHM_IMAGE','fwhm')
+	template_det.rename_column('FLAGS','flag')
+	try:
+		sp0 = sp(source_data, source_det=source_det, template_det=template_det,
+			min_n_match = 5, n_det=10000, max_match_dist=10)
+		sp0.align()
+		fits.writeto(newname, header=refhdr,data=sp0.aligned_data,overwrite=True)
+		return 'Done'
+	except: return None
 
 
+
+
+'''
+ 	source_data: numpy.ndarray,
+    template_data: numpy.ndarray = None,
+    source_det: Union[astropy.table.table.Table, NoneType] = None,
+    template_det: Union[astropy.table.table.Table, NoneType] = None,
+    output_shape: Union[tuple, NoneType] = None,
+    n_det: float = 0.25,
+    n_quad_det: int = 20,
+    min_quad_sep: int = 50,
+    max_match_dist: int = 5,
+    min_n_match: int = 100,
+    sub_tile: int = 2,
+    max_quad_cand: int = 10,
+    patience_quad_cand: int = 2,
+    max_quad_hash_dist: float = 0.005,
+    spline_order: int = 3,
+    interp_order: int = 3,
+    sep_thresh: float = 5,
+    min_fwhm: float = 1,
+    bad_flag_bits: int = 0,
+    min_sep: float = None,
+Detection-based astronomical image registration.
+
+Parameters
+----------
+source_data : numpy.ndarray
+    The source image data to be transformed.
+template_data : numpy.ndarray, optional
+    The template image data to which the source image will be transformed.
+    Must be provided if `template_det` is `None`.
+source_det, template_det : None or `astropy.table.Table`, optional
+    The detection table for the relevant image. If `None` a basic
+    `sep.extract()` run will be performed (in this case both `source_data`
+     **and** `template_data` must both be given).
+output_shape : None or tuple, optional
+    The shape of the output aligned source image data. If `None`, output
+    shape is the same as `source_data`.
+n_det : int or float, optional
+    The number of detections to use in the alignment matching. Detections
+    are sorted by the "flux" column so this will trim the detections to
+    the `ndet` brightest detections in each image. If `0 < ndet <= 1`
+    then `ndet` is calculated as a fractional size of the source
+    detection table.
+n_quad_det : int, optional
+    The number of detections to make quads from. This will create
+    `C(n_quad_det, 4) * sub_tile**2` quads, so raising the value
+    too much may have a significant performance hit.
+min_quad_sep : float, optional
+    Minimum distance in pixels between detections in a quad for it
+    to be valid.
+max_match_dist : float, optional
+    Maximum matching distance between coordinates after the
+    initial transformation to be considered a match.
+min_n_match : int, optional
+    Minimum number of matched dets for the affine transformation
+    to be considered successful.
+sub_tile : int, optional
+    Split the image into this number of sub-tiles in each axis and perform
+    quad creation, affine transform fitting, and cross-matching
+    independently in each sub-tile. This can help in the case of very
+    large distortions where a single affine transformation will not
+    describe the corner regions, for example. Set to `1` to disable this.
+max_quad_cand : int, optional
+    Maximum number of quad candidates to loop through to find initial
+    affine transformation.
+patience_quad_cand : int, optional
+    If the affine transformation calculated from a quad does not yield
+    a larger number of cross-matches than the current best transformation
+    for this number of candidates, then early stop the fitting.
+max_quad_hash_dist : float, optional
+    Limit on quad distances to consider a match.
+spline_order : int, optional
+    The order in `x` and `y` of the final spline surfaces used to
+    correct the affine transformation. If `0` then no spline
+    correction is performed.
+interp_order : int, optional
+    The spline order to use for interpolation - this is passed
+    directly to `scipy.ndimage.affine_transform` and
+    `scipy.ndimage.interpolation.map_coordinates` as the `order`
+    argument. Must be in the range 0-5.
+sep_thresh : float, optional
+    The threshold value to pass to `sep.extract()`.
+min_fwhm : float, optional
+    The minimum value of fwhm for a valid source.
+bad_flag_bits : int, optional
+    The integer representation of bad flag bits - sources matching
+    at least one of these bits in their flag value will be removed.
+min_sep : float, optional
+    The minimum separation between coordinates in the table, useful
+    to remove crowded sources that are problem for cross-matching.
+    If omitted defaults to `2 * max_match_dist`.
+'''
 
 
 '''
