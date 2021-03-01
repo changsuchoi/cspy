@@ -5,11 +5,11 @@ This is adapted from http://obswww.unige.ch/%7Etewes/alipy/tutorial.html
 import alipy
 import glob
 import os
+from multiprocessing import Process,Pool
 
 # images_to_align = sorted(glob.glob("images/*.fits"))
 # images_to_align = sorted(glob.glob('Calib-*.fits'))
 ref_image = "ref.fits"
-
 
 def identify_transform(ref_image, images_to_align,rad= 5, nb=500,verbose=False, visual=False):
     identifications = alipy.ident.run(ref_image, images_to_align,r=rad, n=nb, visu=visual)
@@ -17,7 +17,6 @@ def identify_transform(ref_image, images_to_align,rad= 5, nb=500,verbose=False, 
     # Put visu=True to get visualizations in form of png files
     #   (nice but much slower)
     # On multi-extension data, you will want to specify the hdu (see API doc).
-
     if verbose:
         # The output is a list of Identification objects,
         # which contain the transforms :
@@ -35,15 +34,11 @@ def identify_transform(ref_image, images_to_align,rad= 5, nb=500,verbose=False, 
                 # print id.trans.matrixform()
                 # print id.trans.inverse() # this returns a
                 #                          # new SimpleTransform object
-
             else:
                 print( "%20s : no transformation found !" % (id.ukn.name))
-
     return identifications
 
-
 # identifications= identify_transform(ref_image, images_to_align, rad= 5, nb=500, verbose=False, visual=False)
-
 
 def align_images(ref_image, identifications, iraf=True, outdir='alipy_out'):
     # Minimal example of how to align images :
@@ -68,9 +63,13 @@ def align_images(ref_image, identifications, iraf=True, outdir='alipy_out'):
                 # By default, the aligned images are written into a directory
                 # "alipy_out".
 
-
-
-
+# register ref to im
+def alipyrun(im,ref_image):
+	identifications= identify_transform(im, ref_image,
+					rad= 5, nb=500, verbose=False, visual=False)
+	align_images(im, identifications, iraf=True, outdir='alipy_out')
+	#os.system('mv alipy_out/'+os.path.splitext(ref_image[0])[0]+
+	#		'_gregister'+os.path.splitext(ref_image[0])[1]+' '+newname)
 
 
 # match input images to ref image
@@ -82,72 +81,63 @@ def alipy_in2ref(ref_image,images_to_align):
     identifications= identify_transform(ref_image, images_to_align, rad= 5, nb=500, verbose=False, visual=False)
     align_images(ref_image, identifications, iraf=True, outdir='alipy_out')
     for i in images_to_align :
-        newname = 'gr_'+os.path.splitext(i)[0]+os.path.splitext(i)[1]
+        newname = 'reg_'+os.path.splitext(i)[0]+os.path.splitext(i)[1]
         os.system('mv alipy_out/'+os.path.splitext(i)[0]+'_gregister'+os.path.splitext(i)[1]+' '+newname)
-
-
-
 
 # match ref image to input image
 # ref image will be aligned to input image, no change in input image
 # im='Calib-LSGT-NGC3367-20190630-084141-r-180.fits'
 # ref_image=['ref.fits']
-# output name = gr_Calib-LSGT-NGC3367-20190630-084141-r-180.fits
+# output name = reg_Calib-LSGT-NGC3367-20190630-084141-r-180.fits
+
 def alipy_ref2in(im,ref_image=['ref.fits']):
-    '''
-    ref_image should be a list!
-    like ref_image=['ref.fits']
-    '''
-    identifications= identify_transform(im, ref_image, rad= 5, nb=500, verbose=False, visual=False)
-    align_images(im, identifications, iraf=True, outdir='alipy_out')
-    newname = 'gr_'+os.path.splitext(im)[0]+os.path.splitext(im)[1]
-    os.system('mv alipy_out/'+os.path.splitext(ref_image[0])[0]+'_gregister'+os.path.splitext(ref_image[0])[1]+' '+newname)
-
-
-
+	'''
+	ref_image should be a list!
+	like ref_image=['ref.fits']
+	'''
+	newname = 'reg_'+os.path.splitext(im)[0]+os.path.splitext(im)[1]
+	print(im, newname)
+	if os.path.isfile(newname):
+		os.system('rm '+newname)
+		#return 'pass'
+	alipyrun(im,ref_image)
+	s=os.system('mv alipy_out/'+os.path.splitext(ref_image[0])[0]+
+				'_gregister'+os.path.splitext(ref_image[0])[1]+' '+newname)
+	if s==0 :
+		print('Well done')
+	else:
+		print('Alipy did not worked')
+		print(im, 'stopped')
+		return None
+	return 'Done'
 
 # with open('comfiles.txt','r') as file_handle: lines = file_handle.read().splitlines()
 def alipy_epoch(lines):
-    for iii in lines:
-        ii=iii[:-1].split(',')
-        print('='*60,'\n')
-        print(lines.index(iii), 'of', len(iii))
-        if len(ii) == 1 :
-            print(ii[0], 'single image')
-            os.system('mv '+ii[0]+' gr'+ii[0])
-            os.system('mv '+os.path.splitext(ii[0])+'_gregister.fits')
-        else :
-            ref_image=ii[0]
-            images_to_align=ii
-            print (len(ii), 'files will be registerd')
-            identifications= identify_transform(ref_image, images_to_align, rad= 5, nb=500, verbose=False, visual=False)
-            align_images(ref_image, identifications, iraf=True, outdir='alipy_out')
-    os.system('mv alipy_out/*gregister.fits .')
-
-
-os.system('rename _gregister.fits .fits alipy_out/*gregister*')
-os.system('rename Calib grCalib alipy_out/Calib*.fits')
-os.system('mv alipy_out/grCalib*.fits .')
-
-
-
-
-
-
-'''
-
-with open('comfiles.txt','r') as file_handle: lines = file_handle.read().splitlines()
-
-# gregister
-for i in lines :
-        if len(i.split(',')) <= 2 :
-            print(i, 'single image')
-        else :
-            ref_image=i.split(',')[0]
-            images_to_align=i.split(',')[:-1]
-            print (i.split(','))
-            identifications= identify_transform(ref_image, images_to_align, rad= 5, nb=500, verbose=False, visual=False)
-            align_images(ref_image, identifications, iraf=True, outdir='alipy_out')
-
-
-'''
+	alipynolist,sigleline=[],[]
+	for iii in lines:
+		ii=iii[:-1].split(',')
+		print('='*60,'\n')
+		print(lines.index(iii), 'of', len(lines))
+		if len(ii) == 1 :
+			print(ii[0], 'single image, No touch')
+			singleline.append(ii)
+			return 'Pass'
+			#os.system('mv '+ii[0]+' gr'+ii[0])
+			#os.system('mv '+os.path.splitext(ii[0])+'_gregister.fits')
+		else :
+			ref_image=ii[0]
+			images_to_align=ii
+			print (len(ii), 'files will be registerd')
+			identifications= identify_transform(ref_image, images_to_align,
+			rad= 5, nb=500, verbose=False, visual=False)
+			align_images(ref_image, identifications, iraf=True, outdir='alipy_out')
+			s=os.system('mv alipy_out/*gregister.fits .')
+			if s==0 :
+				print('Well done')
+				return 'Done'
+			else:
+				print('Alipy did not worked')
+				alipynolist.append(iii)
+				return None
+	print('sigle image lines','\n',singleline,'\n')
+	print('alipy no list','\n',alipynolist,'\n')

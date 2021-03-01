@@ -57,11 +57,12 @@ def delhdrkey(im,kwds=kwds):
 		if k in list(h.keys()):
 			print('removing',k,h[k])
 			fits.delval(im,k)
-for im in salist:
+
+for im in imlist:
 	print(im)
 	delhdrkey(im)
 
-sekwd=['REFCAT',  'LOWMAG' ,'HIGHMAG',
+kwds=['REFCAT',  'LOWMAG' ,'HIGHMAG',
 'NUM_AUTO','ZP_AUTO' ,'ZPE_AUTO','UL5_AUTO',
 'NUM_AP3' ,'ZP_AP3'  ,'ZPE_AP3' ,'UL5_AP3' ,
 'NUM_AP5' ,'ZP_AP5'  ,'ZPE_AP5' ,'UL5_AP5' ,
@@ -73,9 +74,18 @@ sekwd=['REFCAT',  'LOWMAG' ,'HIGHMAG',
 'NUM_F30' ,'ZP_F30'  ,'ZPE_F30' ,'UL5_F30' ,
 'NUM_OPTA','ZP_OPTA' ,'ZPE_OPTA','UL5_OPTA',
 'NUM_PSF' ,'ZP_PSF'  ,'ZPE_PSF' ,'UL5_PSF' ]
-for im in imlist:
-	print(im)
-	delhdrkey(im,kwds=sekwd)
+#for im in imlist:
+#	print(im)
+#	delhdrkey(im,kwds=sekwd)
+import parmap
+imlist.sort()
+stime=time.time()
+cpunum=2
+result=parmap.map(delhdrkey, imlist, pm_pbar=True, pm_processes=cpunum)
+etime=time.time()
+duration=etime-stime
+print('header fix done', len(imlist), duration/60)
+
 # header check and update
 '''
 import astropy.io.fits as fits

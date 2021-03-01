@@ -13,8 +13,8 @@ def pixelscale(i):
 	cd12 = fits.getheader(i)['CD1_2']
 	cd21 = fits.getheader(i)['CD2_1']
 	cd22 = fits.getheader(i)['CD2_2']
-	pixscale=round(np.sqrt(cd11**2 + cd21**2) *3600 ,4)
-	puthdr(i,'PSCALE',round(pixscale,3))
+	pixscale=round(np.sqrt(cd11**2 + cd21**2) *3600 ,5)
+	puthdr(i,'PSCALE',round(pixscale,5))
 	#print('Pixel scale =', pixscale,'\"')
 	return pixscale
 
@@ -154,3 +154,13 @@ for a,b zip(imlist,result):
 		print(a,b)
 		badlist.append(a)
 print badlist
+
+
+
+# map
+for result in map(func, arg0)
+	print result
+
+result=map(func,args)
+print(list(result))
+# lambda

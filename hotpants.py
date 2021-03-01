@@ -41,10 +41,10 @@ def hotpantsrun(im, regrefim, il=0, iu=65000, tl=0, tu=65000, sigmatch=False):
 	#	print('FWHM_INPUT',fwhm_im,'FWHM_REF',fwhm_ref)
 	#	com= 'hotpants -v 0 -inim '+regrefim+' -tmplim '+im+\
 	#		' -outim '+outfile+' -n t -c i' +' -oci '+convfile +opt1+opt2+opt3+opt4+opt5
-
-def hprun(im, il=0, iu=65000, tl=0, tu=65000, sigmatch=False):
+head='rew_'
+def hprun(im, refim='ref.fits', il=0, iu=65000, tl=0, tu=65000, sigmatch=False):
 	#use sigmatch=True when
-	regrefim = 'reg_'+im
+	#refim = 'ref.fits'
 	outfile='hd'+im
 	convfile='hc'+im
 	kernelfile='hk'+im
@@ -61,11 +61,11 @@ def hprun(im, il=0, iu=65000, tl=0, tu=65000, sigmatch=False):
 	# in the case of Sigma_image > Sigma_template, for better subtraction, you may try this option
 	# FWHM = 2.355 sigma
 	fwhm_im=fits.getheader(im)['FWHM_PIX']
-	fwhm_reg=fits.getheader(regrefim)['FWHM_PIX']
+	fwhm_reg=fits.getheader(refim)['FWHM_PIX']
 	#com= 'hotpants -v 0 -inim '+regrefim+' -tmplim '+im+\
 	#	' -outim '+outfile+opt0 +' -oci '+convfile +opt1+opt2+opt3+opt4+opt5
-	com= 'hotpants -v 0 -inim '+im+' -tmplim '+regrefim+\
-		' -outim '+outfile + opt0a +' -oci '+ convfile +opt1+opt2+opt3+opt4
+	com= 'hotpants -v 0 -inim '+im+' -tmplim '+refim+\
+		' -outim '+outfile + opt0a +' -oci '+ convfile +opt1+opt2#+opt3#+opt4
 	print(com)
 	os.system(com)
 	#if fwhm_im > fwhm_reg :
@@ -79,7 +79,7 @@ def hprun(im, il=0, iu=65000, tl=0, tu=65000, sigmatch=False):
 	#print(com)
 	#os.system(com)
 
-hprun(im)
+#hprun(im)
 
 '''
 if sigmatch = True :
@@ -106,7 +106,7 @@ print (infile)
 os.system(com)
 '''
 
-
+'''
 for n in range(len(infile)):
 print (str(n) + ' of '+ str(len(infile)))
 hotpantsrun(infile[n])
@@ -116,3 +116,4 @@ cpunum=4
 if __name__ == '__main__' :
 p=Pool(cpunum)
 p.map(hotpantsrun,infile)
+'''

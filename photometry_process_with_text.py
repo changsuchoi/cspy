@@ -131,7 +131,7 @@ endtime=time.time()
 duration= endtime-starttime
 '''
 stime=time.time()
-cpunum=20
+cpunum=3
 result=parmap.map(scamp_astrometry_net, oklist, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
@@ -150,7 +150,7 @@ DEBLEND_MINCONT = str(0.005)
 lowmag=13
 highmag=19
 filname,filerr='R','Rerr'
-filname,filerr='r','rerr'
+#filname,filerr='r','rerr'
 magtypes=['MAG_AUTO', 'MAG_PSF',
 		'MAG_APER','MAG_APER_1','MAG_APER_2',
 		'MAG_APER_3','MAG_APER_4','MAG_APER_5','MAG_APER_6','MAG_APER_7',
@@ -183,7 +183,7 @@ print('se_1st done', len(imlist), duration)
 import parmap
 imlist.sort()
 stime=time.time()
-cpunum=20
+cpunum=3
 result=parmap.map(se1st, imlist, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
@@ -195,6 +195,11 @@ for a,b in zip(imlist,result):
 		print(a,b)
 		badlist.append(a)
 print (badlist)
+
+for i in badlist:
+	print(i)
+	os.system('mv '+os.path.splitext(i)[0]+'* bad/')
+
 
 # 16sec for 1 image
 
@@ -210,70 +215,129 @@ print (badlist)
 # se-2nd-phot-function.py
 # return *.sef (threshold 1.5), *.dat (final catalog)
 imlist=glob.glob('*Calib*.fits')
-
+imlist.sort()
+print(len(imlist))
+os.system('rm *Calib*_seg.fits *Calib*_ap.fits')
 #single
 for j,im in enumerate(imlist):
 	print(j,'of',len(imlist))
-	if os.path.isfile(os.path.splitext(im)[0]+'.dat'):pass
-	else: se2nd(im)
-
+	#if os.path.isfile(os.path.splitext(im)[0]+'.dat'):pass
+	#else: se2nd(im)
+	se2nd(im)
+# multi core
+import parmap
+imlist.sort()
 stime=time.time()
-cpunum=2
-if __name__ == '__main__' :
-	p=Pool(cpunum)
-	p.map(se2nd,imlist)
-	p.close()
-	p.join()
+cpunum=3
+result=parmap.map(se2nd, imlist, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
-print('se_2nd done', len(imlist), duration)
+print('se_2nd done', len(imlist), duration/60)
 
+badlist=[]
+for a,b in zip(imlist,result):
+	if b=='Pass':
+		print(a,b)
+		badlist.append(a)
+print (badlist)
+print('se_2nd done', len(imlist), duration)
+os.system('rm *.ap.fits *seg.fits')
 
 ''' 10. imagecut.py '''
 # image cut size 10 arcmin
-#return Calib*_10min_cut.fits
+# return Calib*_10min_cut.fits
+# imcopy
+#for im in imlist:
+#	imcopy(im,position=(ra,dec))
+os.system('rm Calib*cut.fits')
 size = 10 # arcmin unit, length of square side
 ra,dec=161.645641, 13.750859
-for im in imlist:
-	imcopy(im,position=(ra,dec))
+positions=(161.645641, 13.750859)
+callist=glob.glob('Calib*.fits')
+callist.sort()
+stime=time.time()
+cpunum=3
+result=parmap.map(imcopy, callist, pm_pbar=True, pm_processes=cpunum)
+etime=time.time()
+duration=etime-stime
+cutcallist=glob.glob('Calib*cut.fits')
+print('imcopy image cut done', len(callist), len(cutcallist), duration/60)
+'''
+IrafError: Error running IRAF task imcopy
+Error in write: Select error for <Subprocess '/data7/cschoi/util/iraf-2.16.1-2018.11.01/bin.linux64/x_images.e -c', at 7f2948107070>: file descriptors [119]
+[Errno 32] Broken pipe
+'''
+# trim
+salist=glob.glob('saCalib*.fits')
+salist.sort()
+stime=time.time()
+cpunum=3
+result=parmap.map(trim, salist, pm_pbar=True, pm_processes=cpunum)
+etime=time.time()
+duration=etime-stime
+cutsalist=glob.glob('saCalib*cut.fits')
+print('trim image cut done', len(salist),len(cutsalist), duration/60)
+#trim(im, positions=(False,False), sizes=(10,10))
 
-''' 11. alipy-ref2in.py '''
+''' 11.1 alipy-ref2in '''
 # registration ref.fits to iuput image, single 2.5sec
 # return reg_Calib*.fits
-for im in imlist:
-	alipy_ref2in(im)
+cutcallist=glob.glob('Calib*cut.fits')
+cutcallist.sort()
+stime=time.time()
+cpunum=3
+result=parmap.map(alipy_ref2in, cutsalist, pm_pbar=True, pm_processes=cpunum)
+etime=time.time()
+duration=etime-stime
+regcutsalist=glob.glob('reg_saCalib*cut.fits')
+print('alipy_ref2in done', len(cutsalist),len(regcutsalist), duration/60)
+#for im in cutlist:
+#	alipy_ref2in(im)
 
-''' 11.1 alipy-ref2in.py '''
+''' 11.2 wcsremap.py '''
 # registration ref.fits to input cut file
-# return reg_Calib*cut.fits
-cutlist=glob.glob('Calib*cut.fits')
+# return rew_*Calib*cut.fits
+cutlist=glob.glob('saCalib*cut.fits')
 cutlist.sort()
-for im in cutlist:
-	alipy_ref2in(im)
+stime=time.time()
+cpunum=5
+result=parmap.map(wcsremap, cutlist, pm_pbar=True, pm_processes=cpunum)
+etime=time.time()
+duration=etime-stime
+print('wcsremap done', len(cutlist), duration/60)
+
+#for im in cutlist:
+#	wcsremap(im)
 
 ''' 12. hotpants.py '''
 # subtraction
 # return hd*,hc*.fits
 # imlist, cutlist
-
+cutlist=glob.glob('Calib*cut.fits')
+reflist=glob.glob('reg_Calib*cut.fits')
+cutlist.sort()
+head='rew_'
+stime=time.time()
+cpunum=2
+result=parmap.map(hprun, cutsalist, pm_pbar=True, pm_processes=cpunum)
+etime=time.time()
+duration=etime-stime
+hdlist=glob.glob('hd*.fits')
+print('hotpants run done', len(salist),len(hdlist), duration/60)
+'''
 cpunum=2
 if __name__ == '__main__' :
     p=Pool(cpunum)
     p.map(hprun,imlist)
 	p.close()
 	p.join()
+'''
 
 
-cpunum=2
-if __name__ == '__main__' :
-    p=Pool(cpunum)
-    p.map(hprun,cutlist)
-	p.close()
-	p.join()
 
 ''' 13. se_sub.py '''
-
-
+# sub image photometry,
+# return mag, magerr or ul5, detection plot
 
 ''' 14. final LC photometry data file '''
 

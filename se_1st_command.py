@@ -77,9 +77,10 @@ def se1st(im,psf=psf):
 	puthdr(im,'REFCAT',refcat.split('/')[-1],hdrcomment='Referenc Catalog used')
 	puthdr(im,'LOWMAG',lowmag,hdrcomment='Low MAG CUT for ZP Calculation')
 	puthdr(im,'HIGHMAG',highmag,hdrcomment='HIGH MAG CUT for ZP Calculation')
-	for magtype in magtype_dict : magtype_zp(im, mtbl, magtype,
-						filname=filname, filerr=filerr,
-						ploton= True, setbl=setbl,skysig=skysig)
+	for magtype in magtype_dict :
+		magtype_zp(im, setbl, mtbl, magtype,
+					filname=filname, filerr=filerr,
+					ploton= True, skysig=skysig)
 	return 'Done'
 '''
 	#MAG_PSF

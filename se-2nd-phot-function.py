@@ -29,7 +29,7 @@ DEBLEND_MINCONT = str(0.005)
 psf=True
 # source extractor command
 def se2com(im,psf=psf):
-	os.system('rm *Calib*_seg.fits *Calib*_ap.fits')
+	#os.system('rm *Calib*_seg.fits *Calib*_ap.fits')
 	PSCALE=fits.getheader(im)['PSCALE']
 	fwhm_pix=fits.getheader(im)['FWHM_PIX']
 	opt_ap=fits.getheader(im)['OPT_AP']
@@ -96,10 +96,13 @@ def secat_zp(im):
 		sefcat['MAGERR_PSF']=np.sqrt(sefcat['MAGERR_PSF']**2 + hdr['ZPE_PSF']**2)
 	sefcat.write(fn+'.dat',format='ascii.commented_header',overwrite=True)
 
+
+
 def se2nd(im):
 	psf=True
 	se2com(im)
 	secat_zp(im)
+	return 'Done'
 
 
 '''
