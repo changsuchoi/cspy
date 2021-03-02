@@ -80,7 +80,7 @@ def psfexrun(im):
 	print('='*60,'\n')
 	if os.path.isfile(os.path.splitext(im)[0]+'.psf') : pass
 	else: psfex(im)
-	os.system('rm *psfex.xml')
+	os.system('rm '+os.path.splitext(im)[0]+'.psfex.xml')
 	return 'Done'
 
 #inlist=glob.glob("*Calib*.fits")

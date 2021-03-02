@@ -21,6 +21,8 @@ print ('oklist', len(oklist),'nolist', len(nolist))
 # move them to bad/ directory
 
 '''  1.b header check '''
+# DATE-OBS, EXPTIME, FILTER
+# header-fix.py
 
 ''' 2. scamp-astrometry.net-result.py '''
 # multiprocessing cpu=4 projection='TPV'
@@ -53,7 +55,6 @@ salist=glob.glob('saCalib*.fits')
 salist.sort()
 print(len(oklist),len(salist))
 
-
 ''' 2.a. remove PVx_x keyword for saCalib*.fits '''
 # header-fix.py delhdrkey()
 kwds=['PV1_0', 'PV1_1', 'PV1_2', 'PV1_3', 'PV1_4', 'PV1_5',
@@ -81,6 +82,7 @@ for ii in salines:
     if len(iii)==1:
         print (iii)
 
+import time
 starttime=time.time()
 alipy_epoch(lines)
 endtime=time.time()
@@ -132,10 +134,10 @@ duration= endtime-starttime
 '''
 stime=time.time()
 cpunum=3
-result=parmap.map(scamp_astrometry_net, oklist, pm_pbar=True, pm_processes=cpunum)
+result=parmap.map(psfexrun, imlist, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
-print('scamp_astrometry.net done', len(imlist), duration)
+print('psfexrun done', len(imlist), duration)
 
 ''' 8. se_1st '''
 # optimal_aper.py
@@ -214,7 +216,7 @@ for i in badlist:
 ''' 9.se_2nd '''
 # se-2nd-phot-function.py
 # return *.sef (threshold 1.5), *.dat (final catalog)
-imlist=glob.glob('saCalib*.fits')
+imlist=glob.glob('*Calib*.fits')
 imlist.sort()
 print(len(imlist))
 os.system('rm *Calib*_seg.fits *Calib*_ap.fits')
@@ -253,15 +255,13 @@ os.system('rm *Calib*cut.fits')
 size = 10 # arcmin unit, length of square side
 ra,dec=161.645641, 13.750859
 positions=(161.645641, 13.750859)
-callist=glob.glob('*Calib*.fits')
-callist.sort()
 stime=time.time()
 cpunum=3
-result=parmap.map(imcopy, callist, pm_pbar=True, pm_processes=cpunum)
+result=parmap.map(imcopy, imlist, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
-cutcallist=glob.glob('Calib*cut.fits')
-print('imcopy image cut done', len(callist), len(cutcallist), duration/60)
+cutcallist=glob.glob('*Calib*cut.fits')
+print('imcopy image cut done', len(imlist), len(cutcallist), duration/60)
 '''
 IrafError: Error running IRAF task imcopy
 Error in write: Select error for <Subprocess '/data7/cschoi/util/iraf-2.16.1-2018.11.01/bin.linux64/x_images.e -c', at 7f2948107070>: file descriptors [119]
@@ -270,55 +270,55 @@ Error in write: Select error for <Subprocess '/data7/cschoi/util/iraf-2.16.1-201
 # trim
 sz=(10,10)
 pos=(161.645641, 13.750859)
-salist=glob.glob('saCalib*.fits')
-salist.sort()
+#salist=glob.glob('saCalib*.fits')
+#salist.sort()
 stime=time.time()
-cpunum=5
-result=parmap.map(trim, salist, pm_pbar=True, pm_processes=cpunum)
+cpunum=1
+result=parmap.map(trim, imlist, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
-cutsalist=glob.glob('saCalib*cut.fits')
-print('trim image cut done', len(salist),len(cutsalist), duration/60)
+cutlist=glob.glob('*Calib*cut.fits')
+print('trim image cut done', len(imlist),len(cutlist), duration/60)
 #trim(im, positions=(False,False), sizes=(10,10))
-
+imlist=imlist+cutlist
 ''' 11.1 alipy-ref2in '''
 # registration ref.fits to iuput image, single 2.5sec
 # return reg_Calib*.fits
-salist=glob.glob('saCalib*.fits')
-salist.sort()
+#salist=glob.glob('saCalib*.fits')
+#salist.sort()
 stime=time.time()
 cpunum=3
-result=parmap.map(alipy_ref2in, cutsalist, pm_pbar=True, pm_processes=cpunum)
+result=parmap.map(alipy_ref2in, imlist, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
-regcutsalist=glob.glob('reg_saCalib*cut.fits')
-print('alipy_ref2in done', len(cutsalist),len(regcutsalist), duration/60)
+regimlist=glob.glob('reg_*Calib*cut.fits')
+print('alipy_ref2in done', len(imlist),len(regimlist), duration/60)
 
 #single core
-salist=glob.glob('saCalib*.fits')
-salist.sort()
+#salist=glob.glob('saCalib*.fits')
+#salist.sort()
 result,nolist=[],[]
-for n,im in enumerate(salist):
-	print(n+1, 'of', len(salist))
+for n,im in enumerate(imlist):
+	print(n+1, 'of', len(imlist))
 	r=alipy_ref2in(im)
 	if r==None:nolist.append(im)
 	result.append(r)
-print(len(salist),len(nolist))
+print(len(imlist),len(nolist))
 
 ''' 11.2 wcsremap.py '''
 # registration ref.fits to input cut file
 # return rew_*Calib*cut.fits
 # remap2min : remap ref.fits to have the the pixelscale value (least pixel scale -0.001)
-salist=glob.glob('saCalib*.fits')
-salist.sort()
-remap2min(salist, refim='ref.fits')
+#salist=glob.glob('saCalib*.fits')
+#salist.sort()
+remap2min(imlist, refim='ref.fits')
 stime=time.time()
-cpunum=10
-result=parmap.map(wcsremap, salist, pm_pbar=True, pm_processes=cpunum)
+cpunum=3
+result=parmap.map(wcsremap, imlist, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
-rewlist=glob.glob('rew_saCalib*.fits')
-print('wcsremap done', len(salist),len(rewlist) ,duration/60)
+rewlist=glob.glob('rew_*Calib*.fits')
+print('wcsremap done', len(imlist),len(rewlist) ,duration/60)
 
 ''' 11.3 spalipy '''
 # registration ref.fits to input cut file
@@ -346,16 +346,18 @@ print('spalipy done', len(salist),len(rewlist) ,duration/60)
 # subtraction
 # return hd*,hc*.fits
 # imlist, cutlist
-salist=glob.glob('saCalib*.fits')
-salist.sort()
+#salist=glob.glob('saCalib*.fits')
+#salist.sort()
+head='reg_'
+head='rew_'
 #reflist=reflist=['rew_'+s for s in salist]
 stime=time.time()
-cpunum=3
-result=parmap.map(hprun, salist, pm_pbar=True, pm_processes=cpunum)
+cpunum=5
+result=parmap.map(hprun, imlist, head='rew_',pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
-hdlist=glob.glob('hd*.fits')
-print('hotpants run done', len(salist),len(hdlist), duration/60)
+hdlist=glob.glob('hd'+head+'*.fits')
+print('hotpants run done', len(imlist),len(hdlist), duration/60)
 '''
 cpunum=2
 if __name__ == '__main__' :
@@ -368,8 +370,37 @@ if __name__ == '__main__' :
 
 
 ''' 13. se_sub.py '''
+# se-target.py
 # sub image photometry,
 # return mag, magerr or ul5, detection plot
+
+hdlist=glob.glob('hd*Calib*.fits')
+hdlist.sort()
+print(len(hdlist))
+
+targetname='SN2018kp'
+tra,tdec=161.637792, 13.741869
+pos=(tra,tdec)
+sizes=(5,5)
+sz=sizes
+thead=''
+for j in tblcols: thead+=j+'\t'
+for h in hdrkey: thead+=h+'\t'
+resulthead= '#FILE'+'\t'+'MJD'+'\t'+'OBSERVATORY'+'\t'+'FILTER'+'\t'+thead+'sep'+'\n'
+f=open(targetname+'-'+os.getcwd().split('/')[-2]+'-'+os.getcwd().split('/')[-1]+'.dat','w')
+f.write(resulthead)
+for n,im in enumerate(hdlist):
+	print('='*60,'\n')
+	print(im, n+1,'of', len(hdlist))
+	body=sub_target_phot(im, tra, tdec)
+	f.write(body)
+	trimstamp(im, positions=pos, sizes=sz)
+	fitplot_target_stamp(im,tra,tdec,sizes)
+f.close()
+
+
+
+
 
 ''' 14. final LC photometry data file '''
 

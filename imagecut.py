@@ -36,6 +36,7 @@ import astropy.coordinates as coord
 size = 10 # arcmin unit, length of square side
 ra,dec=161.645641, 13.750859
 positions=(False,False)
+positions=(ra,dec)
 def imcopy(im,size=size,positions=positions):
 	'''
 	size=10
@@ -98,7 +99,7 @@ def trim(inim, positions=pos, sizes=sz):
 	hdu = fits.open(inim)[0]
 	hdr=hdu.header
 	w = WCS(hdu.header)
-	outim=os.path.splitext(inim)[0]+'_'+str(sizes[0])+'min_cut.fits'
+	outim=os.path.splitext(inim)[0]+'_'+'{0:02d}'.format(sizes[0])+'min_cut.fits'
 	if positions==(False,False):
 		px, py= hdr['NAXIS1']/2., hdr['NAXIS2']/2.
 		cra,cdec=w.all_pix2world(px,py,1)

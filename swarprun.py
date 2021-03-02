@@ -48,7 +48,7 @@ def puthdr(inim, hdrkey, hdrval, hdrcomment=''):
 	comment     = inim+'\t'+'('+hdrkey+'\t'+str(hdrval)+')'
 
 def exposuresum(ims,expkey='EXPTIME'):
-	exps=[fits.getheader(i)[expkey] for i in ims]
+	exps=[float(fits.getheader(i)[expkey]) for i in ims]
 	expsum=np.sum(exps)
 	return str(int(expsum))
 

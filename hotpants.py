@@ -41,13 +41,14 @@ def hotpantsrun(im, regrefim, il=0, iu=65000, tl=0, tu=65000, sigmatch=False):
 	#	print('FWHM_INPUT',fwhm_im,'FWHM_REF',fwhm_ref)
 	#	com= 'hotpants -v 0 -inim '+regrefim+' -tmplim '+im+\
 	#		' -outim '+outfile+' -n t -c i' +' -oci '+convfile +opt1+opt2+opt3+opt4+opt5
-
-def hprun(im, refim='reg_'+im, il=0, iu=65000, tl=0, tu=65000, sigmatch=False):
+head='reg_'
+def hprun(im, head=head, il=0, iu=65000, tl=0, tu=65000, sigmatch=False):
+	refim=head+im
 	print(im, refim)
 	#use sigmatch=True when fwhm values are significantly different.
 	#refim = 'ref.fits' : default
-	outfile='hd'+im
-	convfile='hc'+im
+	outfile='hd'+head+im
+	convfile='hc'+head+im
 	os.system('rm '+outfile+' '+convfile)
 	#kernelfile='hk'+im
 	# for pan starrs image subtraction set tu, tl more than 100000, -100000

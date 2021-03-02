@@ -79,20 +79,18 @@ def puthdr(inim, hdrkey, hdrval, hdrcomment=''):
 	comment     = inim+'\t'+'('+hdrkey+'\t'+str(hdrval)+')'
 
 def exposuresum(ims,expkey='EXPTIME'):
-	exps=[fits.getheader(i)[expkey] for i in ims]
+	exps=[float(fits.getheader(i)[expkey]) for i in ims]
 	expsum=np.sum(exps)
 	return str(int(expsum))
-
-glist=glob.glob('Calib*gregister.fits')
-glist.sort()
-glines=epoch_group(glist)
 
 # EXP_TIME EXPTIME header keyword
 # alllist=glob.glob('*Calib*.fits')
 # for m in alllist:
 # 		puthdr(m,'EXPTIME', fits.getheader(m)['EXP_TIME'])
 def imagecombine_epoch(glines):
-	for i in glines:
+	for n,i in enumerate(glines):
+		print('='*60,'\n')
+		print(n,'of',len(glines))
 		ii=i[:-1].split(',')
 		if len(ii)==1 : pass
 			#if os.path.isfile(centertimeheader(ii)[1]) : pass
@@ -109,3 +107,8 @@ def imagecombine_epoch(glines):
 				puthdr(centertimeheader(ii)[1],'DATE-OBS', centertimeheader(ii)[0])
 				print('='*60,'\n')
 	os.system('rm *gregister.fits')
+
+#glist=glob.glob('Calib*gregister.fits')
+#glist.sort()
+#glines=epoch_group(glist)
+

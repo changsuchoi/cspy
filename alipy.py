@@ -121,7 +121,7 @@ def alipy_epoch(lines):
 		if len(ii) == 1 :
 			print(ii[0], 'single image, No touch')
 			singleline.append(ii)
-			return 'Pass'
+			#return 'Pass'
 			#os.system('mv '+ii[0]+' gr'+ii[0])
 			#os.system('mv '+os.path.splitext(ii[0])+'_gregister.fits')
 		else :
@@ -134,10 +134,11 @@ def alipy_epoch(lines):
 			s=os.system('mv alipy_out/*gregister.fits .')
 			if s==0 :
 				print('Well done')
-				return 'Done'
+				# return 'Done'
 			else:
 				print('Alipy did not worked')
 				alipynolist.append(iii)
-				return None
+				#return None
+
 	print('sigle image lines','\n',singleline,'\n')
 	print('alipy no list','\n',alipynolist,'\n')

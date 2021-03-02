@@ -16,6 +16,12 @@ def oswalkfunc():
 	print(len(lines),'files')
 	return lines
 
+def puthdr(inim, hdrkey, hdrval, hdrcomment=''):
+	from astropy.io import fits
+	hdr		=	fits.getheader(inim)
+	fits.setval(inim, hdrkey, value=hdrval, comment=hdrcomment)
+	comment     = inim+'\t'+'('+hdrkey+'\t'+str(hdrval)+')'
+
 lines= oswalkfunc()
 lines.sort()
 fitslist= [s for s in lines if s.split('/')[-1][-5:]=='.fits']
@@ -118,4 +124,8 @@ puthdr(im,'DATE-OBS',dateobs)
 # SOAO DATE-OBS fix
 dateobs=fits.getheader(im)['DATE-OBS']+'T'+fits.getheader(im)['TIME-OBS']
 puthdr(im,'DATE-OBS',dateobs)
+# MAO SNUCAM DATE-OBS fix
+dateobs=fits.getheader(im)['DATE-OBS']+'T'+fits.getheader(im)['TIME-OBS']
+puthdr(im,'DATE-OBS',dateobs)
 '''
+
