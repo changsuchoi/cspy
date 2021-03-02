@@ -113,7 +113,7 @@ def alipy_ref2in(im,ref_image=['ref.fits']):
 
 # with open('comfiles.txt','r') as file_handle: lines = file_handle.read().splitlines()
 def alipy_epoch(lines):
-	alipynolist,sigleline=[],[]
+	alipynolist,singleline=[],[]
 	for iii in lines:
 		ii=iii[:-1].split(',')
 		print('='*60,'\n')

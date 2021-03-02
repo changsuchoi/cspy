@@ -46,7 +46,7 @@ def hotpantsrun(im, regrefim, il=0, iu=65000, tl=0, tu=65000, sigmatch=False):
 	fwhm_im=fits.getheader(im)['FWHM_PIX']
 	fwhm_reg=fits.getheader(regrefim)['FWHM_PIX']
 	#com= 'hotpants -v 0 -inim '+regrefim+' -tmplim '+im+\
-		' -outim '+outfile+opt0 +' -oci '+convfile +opt1+opt2+opt3+opt4+opt5
+	#	' -outim '+outfile+opt0 +' -oci '+convfile +opt1+opt2+opt3+opt4+opt5
 	com= 'hotpants -v 0 -inim '+im+' -tmplim '+regrefim+\
 		' -outim '+outfile+opt0a +' -oci '+convfile +opt1+opt2+opt3+opt4+opt5
 	print(com)
@@ -86,11 +86,11 @@ def hotpantsrun(im,regrefim,il=0,iu=60000,tl=0,tu=60000,sigmatch=False):
 '''
 
 
-
+'''
 for n in range(len(infile)):
 	print (str(n) + ' of '+ str(len(infile)))
 	hotpantsrun(infile[n])
-
+'''
 '''
 def hotpantsrun_ntci(infile):
 	outfile='hd_ntci'+infile
@@ -151,11 +151,12 @@ for n in range(len(infile)):
 '''
 
 # multi CPU running
+'''
 cpunum=4
 if __name__ == '__main__' :
 	p=Pool(cpunum)
 	p.map(hotpantsrun,infile)
-
+'''
 
 print ('all done, check it out!')
 
