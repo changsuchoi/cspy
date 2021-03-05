@@ -169,7 +169,17 @@ hdr1.extend(fits.Header.fromtextfile(iname+'.head'), update=True, update_first=T
 #hdr1.fromtextfile('astromtest.head',update=True,update_first=True)
 fits.writeto('a'+inim,fits.getdata(inim),hdr1)
 '''
-
+kwds=['PV1_0', 'PV1_1', 'PV1_2', 'PV1_3', 'PV1_4', 'PV1_5',
+		'PV1_6', 'PV1_7', 'PV1_8', 'PV1_9', 'PV1_10',
+		'PV2_0', 'PV2_1', 'PV2_2', 'PV2_3', 'PV2_4', 'PV2_5',
+		'PV2_6', 'PV2_7', 'PV2_8', 'PV2_9', 'PV2_10']
+# kwds=['PV1_5', 'PV1_6', 'PV1_7', 'PV1_8', 'PV1_9', 'PV1_10']
+def delhdrkey(im,kwds=kwds):
+	h=fits.getheader(im)
+	for k in kwds:
+		if k in list(h.keys()):
+			print('removing',k,h[k])
+			fits.delval(im,k)
 
 #f=open('scamp_net_result.txt','w')
 # scamp_net(iii)
@@ -179,13 +189,16 @@ def scamp_astrometry_net(im, astref=False, projection='TAN',DETECT_THRESH='3'):
 	headmerge(im)
 	fits.setval('sa'+im, 'FLXSCALE', value=1)
 	fits.setval('sa'+im, 'SCAMPCON', value=contnum, hdrcomment='SCAMP cont. num')
-	return 'done'
-	
+	delhdrkey('sa'+im, kwds=kwds)
+	return 'Done'
+
 def scamp_astrometry_net0(im,projection='TAN',DETECT_THRESH='3'):
 	contnum=scamp_net0(im,projection=projection,DETECT_THRESH='3')
 	headmerge(im)
 	fits.setval('sa'+im, 'FLXSCALE', value=1)
 	fits.setval('sa'+im, 'SCAMPCON', value=contnum, hdrcomment='SCAMP cont. num')
+	delhdrkey('sa'+im, kwds=kwds)
+	return 'Done'
 
 #using astrometry reference file
 # save ASTREF_CATLOG GAIA-EDR3*.cat
@@ -230,6 +243,7 @@ if __name__ == '__main__':
 		p=Pool(cpunum)
 		p.map(scamp_astrometry_net,oklist)
 '''
+
 
 #f.close()
 #hdr1.fromTxtFile('astromtest.head')

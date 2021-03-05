@@ -98,6 +98,10 @@ def imagecombine_epoch(glines):
 			#	print("single image")
 			#	os.system('cp '+ii[0]+' '+centertimeheader(ii)[1])
 			#	puthdr(centertimeheader(ii)[1],'DATE-OBS', centertimeheader(ii)[0])
+			print("single image, change name only")
+			if os.path.isfile(centertimeheader([ii[0]+'s'])[1]) : pass
+			else:
+				os.system('cp '+ii[0]+'s '+centertimeheader([ii[0]+'s'])[1])
 		else:
 			print('='*60,'\n')
 			if os.path.isfile(centertimeheader(ii)[1]) : pass
@@ -111,4 +115,3 @@ def imagecombine_epoch(glines):
 #glist=glob.glob('Calib*gregister.fits')
 #glist.sort()
 #glines=epoch_group(glist)
-

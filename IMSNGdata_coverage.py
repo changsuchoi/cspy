@@ -86,7 +86,9 @@ def oswalknamesep(i):
 '''
 
 snlist=pd.read_csv('/data7/cschoi/sngal/recent-sne-check/rochester-list/matched_list_2018_2020.csv')
-telescopes=['DOAO','LOAO','CCA250','LSGT','MCD30INCH','SOAO','MAO','KCT','SAO','ELSAUSE','SQUEAN','UKIRT','itelescope']
+telescopes=['DOAO','LOAO','CCA250','LSGT','MCD30INCH',
+			'SOAO','MAO','KCT','SAO','ELSAUSE',
+			'SQUEAN','UKIRT','itelescope']
 
 data_directory='/data7/cschoi/IMSNGgalaxies/'
 snhost=snlist['    IMSNGname ']
@@ -94,12 +96,6 @@ snname=snlist['                           Name ']
 sndiscovery=snlist['  Discovery_date ']
 sntype=snlist['        Type ']
 snsep=snlist[' separation ']
-
-
-
-
-
-
 
 os.chdir(data_directory+str.strip(snhost[i]))
 

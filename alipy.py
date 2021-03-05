@@ -10,7 +10,7 @@ from multiprocessing import Process,Pool
 # images_to_align = sorted(glob.glob("images/*.fits"))
 # images_to_align = sorted(glob.glob('Calib-*.fits'))
 ref_image = "ref.fits"
-
+refim='ref.fits'
 def identify_transform(ref_image, images_to_align,rad= 5, nb=500,verbose=False, visual=False):
     identifications = alipy.ident.run(ref_image, images_to_align,r=rad, n=nb, visu=visual)
     # That's it !
@@ -90,12 +90,12 @@ def alipy_in2ref(ref_image,images_to_align):
 # ref_image=['ref.fits']
 # output name = reg_Calib-LSGT-NGC3367-20190630-084141-r-180.fits
 
-def alipy_ref2in(im,ref_image=['ref.fits']):
+def alipy_ref2in(im,head='reg_',ref_image=[refim]):
 	'''
 	ref_image should be a list!
 	like ref_image=['ref.fits']
 	'''
-	newname = 'reg_'+os.path.splitext(im)[0]+os.path.splitext(im)[1]
+	newname = head+os.path.splitext(im)[0]+os.path.splitext(im)[1]
 	print(im, newname)
 	if os.path.isfile(newname):
 		os.system('rm '+newname)

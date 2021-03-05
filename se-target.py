@@ -19,6 +19,7 @@ from astropy.wcs import WCS
 import astropy.wcs.utils as wcsutils
 from astropy.nddata import Cutout2D
 from astropy import units as u
+from astropy.coordinates import SkyCoord
 
 
 seconfigdir ='/data7/cschoi/code/cspy/sex.config/'
@@ -224,7 +225,7 @@ hdrkey=['PSCALE', 'FWHM_PIX','SKYVAL',  'SKYSIG', 'OPT_AP',  'MATCHNUM','REFCAT'
 
 
 # tra,tdec=161.6715913,13.7165212
-def field_target_phot(im, tra, tdec, sep=2.0):
+def field_target_phot(im, tra, tdec, sep=3.0):
 	hdr=fits.getheader(im)
 	setarget(im)
 	tbl=se_zp(im)
@@ -238,7 +239,7 @@ def field_target_phot(im, tra, tdec, sep=2.0):
 		for j in tblcols: body2+=str(tbl[trow][j])+'\t'
 		body3=''
 		for h in hdrkey: body3+=str(hdr[h])+'\t'
-		body=body1+body2+body3+tsep+'\t'+detect'\n'
+		body=body1+body2+body3+str(tsep)+'\t'+detect+'\n'
 	else :
 		detect='N'
 		print(tsep, 'Not detected')
@@ -247,10 +248,10 @@ def field_target_phot(im, tra, tdec, sep=2.0):
 		for j in tblcols: body2+=str(-99)+'\t'
 		body3=''
 		for h in hdrkey: body3+=str(hdr[h])+'\t'
-		body=body1+body2+body3+tsep+'\t'+detect'\n'
+		body=body1+body2+body3+str(tsep)+'\t'+detect+'\n'
 	return body,detect
 
-def sub_target_phot(im, tra, tdec):
+def sub_target_phot(im, tra, tdec,sep=3.0):
 	# im='hdreg_Calib-MAO_FLI-NGC3367-20170124-211937-R-60_4_com.fits'
 	#hdr=fits.getheader(im[6:])
 	hdr=fits.getheader(im)
@@ -266,7 +267,7 @@ def sub_target_phot(im, tra, tdec):
 		for j in tblcols: body2+=str(tbl[trow][j])+'\t'
 		body3=''
 		for h in hdrkey: body3+=str(hdr[h])+'\t'
-		body=body1+body2+body3+tsep+'\t'+detect'\n'
+		body=body1+body2+body3+str(tsep)+'\t'+detect+'\n'
 	else :
 		detect='N'
 		print(tsep, 'Not detected')
@@ -275,10 +276,11 @@ def sub_target_phot(im, tra, tdec):
 		for j in tblcols: body2+=str(-99)+'\t'
 		body3=''
 		for h in hdrkey: body3+=str(hdr[h])+'\t'
-		body=body1+body2+body3+tsep+'\t'+detect'\n'
+		body=body1+body2+body3+str(tsep)+'\t'+detect+'\n'
 	return body,detect
 
 pos=(161.637792 +13.741869)
+tra,tdec=161.637792, 13.741869
 pos=(tra,tdec)
 sz=(5,5)
 def trimstamp(inim, positions=pos, sizes=sz):

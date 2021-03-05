@@ -42,10 +42,10 @@ for j,im in enumerate(oklist) :
 import parmap
 stime=time.time()
 cpunum=5
-result=parmap.map(scamp_astrometry_net, oklist, pm_pbar=True, pm_processes=cpunum)
+result=parmap.map(scamp_astrometry_net, imlist, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
-print('scamp_astrometry.net done', len(imlist), duration)
+print('scamp_astrometry.net done', len(imlist), duration/60)
 #cpunum=4
 #if __name__ == '__main__' :
 #	p=Pool(cpunum)
@@ -119,8 +119,9 @@ os.system('ls saCalib*com.fits | wc -l')
 # psfex run, get .psf files
 # note. MCD30INCH not good for psfex run
 # return *.psf
-imlist=glob.glob('*Calib*.fits')
+imlist=glob.glob('Calib*.fits')
 imlist.sort()
+print(len(imlist))
 stime=time.time()
 '''
 cpunum=2
@@ -185,8 +186,8 @@ print('se_1st done', len(imlist), duration)
 import parmap
 imlist.sort()
 stime=time.time()
-cpunum=3
-result=parmap.map(se1st, imlist, pm_pbar=True, pm_processes=cpunum)
+cpunum=5
+result=parmap.map(se1st, imlist, psf=False, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
 print('se_1st done', len(imlist), duration/60)
@@ -216,21 +217,23 @@ for i in badlist:
 ''' 9.se_2nd '''
 # se-2nd-phot-function.py
 # return *.sef (threshold 1.5), *.dat (final catalog)
+os.system('rm *Calib*_seg.fits *Calib*_ap.fits')
 imlist=glob.glob('*Calib*.fits')
 imlist.sort()
 print(len(imlist))
-os.system('rm *Calib*_seg.fits *Calib*_ap.fits')
 #single
 for j,im in enumerate(imlist):
-	print(j,'of',len(imlist))
-	#if os.path.isfile(os.path.splitext(im)[0]+'.dat'):pass
-	#else: se2nd(im)
-	se2nd(im)
+	print('='*60,'\n')
+	print(j+1,'of',len(imlist))
+	if os.path.isfile(os.path.splitext(im)[0]+'.dat'):pass
+	else: se2nd(im)
+	#se2nd(im)
+
 # multi core
 import parmap
 imlist.sort()
 stime=time.time()
-cpunum=3
+cpunum=5
 result=parmap.map(se2nd, imlist, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
@@ -242,8 +245,8 @@ for a,b in zip(imlist,result):
 		print(a,b)
 		badlist.append(a)
 print (badlist)
-print('se_2nd done', len(imlist), duration)
-os.system('rm *.ap.fits *seg.fits')
+print('se_2nd done', len(imlist), duration/60)
+os.system('rm *ap.fits *seg.fits')
 
 ''' 10. imagecut.py '''
 # image cut size 10 arcmin
@@ -269,11 +272,11 @@ Error in write: Select error for <Subprocess '/data7/cschoi/util/iraf-2.16.1-201
 '''
 # trim
 sz=(10,10)
-pos=(161.645641, 13.750859)
+pos=(161.645641, 13.750859) # NGC3367
 #salist=glob.glob('saCalib*.fits')
 #salist.sort()
 stime=time.time()
-cpunum=1
+cpunum=2
 result=parmap.map(trim, imlist, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
@@ -309,11 +312,12 @@ print(len(imlist),len(nolist))
 # registration ref.fits to input cut file
 # return rew_*Calib*cut.fits
 # remap2min : remap ref.fits to have the the pixelscale value (least pixel scale -0.001)
-#salist=glob.glob('saCalib*.fits')
-#salist.sort()
+imlist=glob.glob('saCalib*.fits')
+imlist.sort()
+print(len(imlist))
 remap2min(imlist, refim='ref.fits')
 stime=time.time()
-cpunum=3
+cpunum=5
 result=parmap.map(wcsremap, imlist, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
@@ -352,7 +356,7 @@ head='reg_'
 head='rew_'
 #reflist=reflist=['rew_'+s for s in salist]
 stime=time.time()
-cpunum=5
+cpunum=3
 result=parmap.map(hprun, imlist, head='rew_',pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
@@ -386,17 +390,18 @@ sz=sizes
 thead=''
 for j in tblcols: thead+=j+'\t'
 for h in hdrkey: thead+=h+'\t'
-resulthead= '#FILE'+'\t'+'MJD'+'\t'+'OBSERVATORY'+'\t'+'FILTER'+'\t'+thead+'sep'+'\n'
+resulthead= '#FILE'+'\t'+'MJD'+'\t'+'OBSERVATORY'+'\t'+'FILTER'+'\t'+thead+'\t'+'sep'+'\t'+'detect'+'\n'
+print(resulthead)
 f=open(targetname+'-'+os.getcwd().split('/')[-2]+'-'+os.getcwd().split('/')[-1]+'.dat','w')
 f.write(resulthead)
 for n,im in enumerate(hdlist):
-	print('='*60,'\n')
-	print(im, n+1,'of', len(hdlist))
-	body=sub_target_phot(im, tra, tdec)
+	body,detect=sub_target_phot(im, tra, tdec)
+	print( im, detect,'\n',body)
 	f.write(body)
 	trimstamp(im, positions=pos, sizes=sz)
 	fitplot_target_stamp(im,tra,tdec,sizes)
 f.close()
+print('and finally comes to the end ...')
 
 
 

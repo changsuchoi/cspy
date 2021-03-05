@@ -68,7 +68,7 @@ def swarpcom(imlist):
 	'PROJECTION_TYPE'   : 'TAN',
 	'RESAMPLE'          : 'Y',
 	'FSCALE_KEYWORD'    : 'FLXSCALE',
-	'COPY_KEYWORDS'     : 'OBJECT,DATE-OBS,FILTER',
+	'COPY_KEYWORDS'     : 'OBJECT,DATE-OBS,EXPTIME',
 	'WRITE_FILEINFO'    : 'Y',
 	'WRITE_XML'         : 'N',
 	}
@@ -101,14 +101,13 @@ salines=epoch_group(salist)
 def swarp_epoch(salines):
 	for n,i in enumerate(salines):
 		print('='*60,'\n')
-		print(n,'of',len(salines))
+		print(n+1,'of',len(salines))
 		ii=i[:-1].split(',')
 		if len(ii)==1 :
-			print("single image, PASS")
-			pass
-			#if os.path.isfile(centertimeheader(ii)[1]) : pass
-			#else:
-				#	os.system('cp '+ii[0]+' '+centertimeheader(ii)[1])
+			print("single image, change name only")
+			if os.path.isfile(centertimeheader([ii[0]+'s'])[1]) : pass
+			else:
+				os.system('cp '+ii[0]+'s '+centertimeheader([ii[0]+'s'])[1])
 				#puthdr(centertimeheader(ii)[1],'DATE-OBS', centertimeheader(ii)[0])
 		else:
 			if os.path.isfile(centertimeheader(ii)[1]) : pass
@@ -116,6 +115,21 @@ def swarp_epoch(salines):
 				print(len(ii),'images will be combined', centertimeheader(ii)[1])
 				swarpcom(ii)
 				puthdr(centertimeheader(ii)[1],'DATE-OBS', centertimeheader(ii)[0])
+
+def swarp_list(ii):
+	''' input list'''
+	if len(ii)==1 :
+		print("single image, change name only")
+		if os.path.isfile(centertimeheader(ii[0])[1]) : pass
+		else:
+			os.system('cp '+ii[0]+'s '+centertimeheader(ii[0])[1])
+			#puthdr(centertimeheader(ii)[1],'DATE-OBS', centertimeheader(ii)[0])
+	else:
+		if os.path.isfile(centertimeheader(ii)[1]) : pass
+		else:
+			print(len(ii),'images will be combined', centertimeheader(ii)[1])
+			swarpcom(ii)
+			puthdr(centertimeheader(ii)[1],'DATE-OBS', centertimeheader(ii)[0])
 
 
 # swarpregister in development

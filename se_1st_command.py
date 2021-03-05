@@ -71,7 +71,7 @@ def se1st(im,psf=psf):
 	puthdr(im, 'MATCHNUM', len(mtbl), hdrcomment='Number of matched stars')
 	if len(mtbl)<5 : return None
 	# magtype='MAG_PSF'
-	mtbl1=starcut(mtbl,lowmag=14,highmag=19,filname=filname,magtype='MAG_AUTO')
+	mtbl1=starcut(mtbl,lowmag=13,highmag=19,filname=filname,magtype='MAG_AUTO')
 	if len(mtbl1)<3 : return None
 	#fwhm_img1=fwhm_img(im,mtbl1)
 	puthdr(im,'REFCAT',refcat.split('/')[-1],hdrcomment='Referenc Catalog used')

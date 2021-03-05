@@ -27,11 +27,12 @@ lines.sort()
 fitslist= [s for s in lines if s.split('/')[-1][-5:]=='.fits']
 print (len(fitslist),'fits files')
 hkey=['DATE-OBS', 'EXPTIME', 'MJD']
+
 flist1,flist2=[],[]
-for im in fitslist:
+for im in imlist:
 	print(im)
 	h=fits.getheader(im)
-	if ('DATE-OBS' in list(h.keys())) and (len(h['DATE-OBS'])>19): pass
+	if ('DATE-OBS' in list(h.keys())) and (len(h['DATE-OBS'])>=19): pass
 	else : flist1.append(im)
 	if 'EXPTIME' not in list(h.keys()): flist2.append(im)
 
@@ -95,16 +96,16 @@ print('header fix done', len(imlist), duration/60)
 '''
 
 # header check and update
-'''
 import astropy.io.fits as fits
 import numpy as np
 os.system('gethead *Calib*.fits DATE-OBS EXPTIME')
 keyword='EXPTIME'
 # keyword = 'DATE-OBS'
-for im in caliblist:
+for im in imlist:
 	hdr=fits.getheader(im)
 	#hdr.get(keyword,default=False)
 	if keyword not in list(hdr.keys()):
+		print(im)
 		hdrval=hdr['EXP_TIME']
 		print('header update',keyword,hdrval)
 		puthdr(im, keyword, hdrval, hdrcomment='')
@@ -124,8 +125,9 @@ puthdr(im,'DATE-OBS',dateobs)
 # SOAO DATE-OBS fix
 dateobs=fits.getheader(im)['DATE-OBS']+'T'+fits.getheader(im)['TIME-OBS']
 puthdr(im,'DATE-OBS',dateobs)
-# MAO SNUCAM DATE-OBS fix
-dateobs=fits.getheader(im)['DATE-OBS']+'T'+fits.getheader(im)['TIME-OBS']
-puthdr(im,'DATE-OBS',dateobs)
-'''
 
+# MAO SNUCAM DATE-OBS fix
+for im in caliblist:
+	dateobs=fits.getheader(im)['DATE-OBS']+'T'+fits.getheader(im)['TIME-OBS']
+	puthdr(im,'DATE-OBS',dateobs)
+'''

@@ -266,7 +266,7 @@ def starcut(mtbl,lowmag=lowmag,highmag=highmag,filname=filname,magtype=magtype):
 				(mtbl['FLAGS'] == 0) &
 				(mtbl[filname] < highmag) &
 				(mtbl[filname] > lowmag) &
-				(mtbl[magtype[:3]+'ERR'+magtype[3:]]<0.1)		)
+				(mtbl[magtype[:3]+'ERR'+magtype[3:]]<0.5)		)
 	return mtbl[idx]
 
 #zp calculation
@@ -316,7 +316,7 @@ def UL_5sig_err(im,setbl,mtbl,mtbl1,magtype,zp2):
 	import numpy as np
 	magerrtype = magtype[:3]+'ERR'+magtype[3:]
 	if len(mtbl1) < 3:
-		return 0 
+		return 0
 	x,y = mtbl1[magtype],mtbl1[magerrtype]
 	#x,y=setbl['MAG_AUTO'],setbl['MAGERR_AUTO']
 	x,y=x[np.where(y<1)],y[np.where(y<1)]
@@ -345,7 +345,6 @@ def UL_5sig_err(im,setbl,mtbl,mtbl1,magtype,zp2):
 	plt.savefig(fn+'_'+magtype+'_'+'5sigUL.png')
 	plt.close()
 	return round((xp[idx_min]+zp2[0])[0],3)
-
 
 def zp_plot(mtbl1, zp2, selected, magtype, im, filname=filname, filerr=filerr):
 	fn=os.path.splitext(im)[0]
@@ -385,8 +384,7 @@ def fitplot(im, mtbl1, magtype, selected):
 	imdata,imhdr=fits.getdata(im,header=True)
 	norm = ImageNormalize(imdata,
 			interval=ZScaleInterval(),
-			stretch=LinearStretch()
-							)
+			stretch=LinearStretch() )
 	wcs=WCS(imhdr)
 	fig,ax=plt.subplots()
 	ax=plt.subplot(projection=wcs)

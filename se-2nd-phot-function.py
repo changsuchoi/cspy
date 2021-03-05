@@ -60,9 +60,6 @@ def se2com(im,psf=psf):
 		secommand= 'sex -c '+opt1+opt2+opt2b+opt3+opt4+opt5+opt6+opt8+opt9 + im
 	os.system(secommand)
 
-
-
-
 def secat_zp(im):
 	from astropy.table import Table
 	from astropy import units as u
@@ -95,8 +92,6 @@ def secat_zp(im):
 		sefcat['MAG_PSF']=sefcat['MAG_PSF']+hdr['ZP_PSF']
 		sefcat['MAGERR_PSF']=np.sqrt(sefcat['MAGERR_PSF']**2 + hdr['ZPE_PSF']**2)
 	sefcat.write(fn+'.dat',format='ascii.commented_header',overwrite=True)
-
-
 
 def se2nd(im):
 	psf=True
