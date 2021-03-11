@@ -41,8 +41,8 @@ def hotpantsrun(im, regrefim, il=0, iu=65000, tl=0, tu=65000, sigmatch=False):
 	#	print('FWHM_INPUT',fwhm_im,'FWHM_REF',fwhm_ref)
 	#	com= 'hotpants -v 0 -inim '+regrefim+' -tmplim '+im+\
 	#		' -outim '+outfile+' -n t -c i' +' -oci '+convfile +opt1+opt2+opt3+opt4+opt5
-head='reg_'
-def hprun(im, head=head, il=0, iu=65000, tl=0, tu=65000, sigmatch=False):
+head='rew_'
+def hprun(im, head=head, il=0, iu=65000, tl=0, tu=65000, ng=True, sigmatch=False):
 	refim=head+im
 	print(im, refim)
 	#use sigmatch=True when fwhm values are significantly different.
@@ -68,14 +68,43 @@ def hprun(im, head=head, il=0, iu=65000, tl=0, tu=65000, sigmatch=False):
 	#print('input image fwhm',fwhm_im, 'ref image fwhm',fwhm_reg)
 	#com= 'hotpants -v 0 -inim '+regrefim+' -tmplim '+im+\
 	#	' -outim '+outfile+opt0 +' -oci '+convfile +opt1+opt2+opt3+opt4+opt5
-	com= 'hotpants -v 0 -inim '+im+' -tmplim '+refim+\
+	if ng==True:
+		com= 'hotpants -v 0 -inim '+im+' -tmplim '+refim+\
 		' -outim '+outfile + opt0a +' -oci '+ convfile +opt1+opt2+opt3#+opt4
+	else:
+		com= 'hotpants -v 0 -inim '+im+' -tmplim '+refim+\
+		' -outim '+outfile + opt0a +' -oci '+ convfile +opt1+opt2#+opt3#+opt4
+
 	print(com)
 	try:
 		os.system(com)
 		return 'Done'
 	except : return None
 
+def hprun_ref(im, refim='ref.fits', il=0, iu=65000, tl=0, tu=65000, ng=True, sigmatch=False):
+	print('='*60,'\n',im, refim,'\n')
+	outfile='hd'+im
+	convfile='hc'+im
+	os.system('rm '+outfile+' '+convfile)
+	#kernelfile='hk'+im
+	# for pan starrs image subtraction set tu, tl more than 100000, -100000
+	opt0=' -n t -c i'
+	opt0a=' -n i -c t'
+	opt1=' -il ' + str(il) +' -iu '+ str(iu)+ ' '
+	opt2=' -tl ' + str(tl) +' -tu '+ str(tu)+ ' '
+	opt3=' -ng 3 6 0.70 4 1.50 2 3.00'
+	opt5=' -hki '
+	if ng==True:
+		com= 'hotpants -v 0 -inim '+im+' -tmplim '+refim+\
+		' -outim '+outfile + opt0a +' -oci '+ convfile +opt1+opt2+opt3#+opt4
+	else:
+		com= 'hotpants -v 0 -inim '+im+' -tmplim '+refim+\
+		' -outim '+outfile + opt0a +' -oci '+ convfile +opt1+opt2#+opt3#+opt4
+	print(com,'\n')
+	try:
+		os.system(com)
+		return 'Done'
+	except : return None
 
 	#if fwhm_im > fwhm_reg :
 	#	com= 'hotpants -v 0 -inim '+regrefim+' -tmplim '+im+\

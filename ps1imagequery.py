@@ -111,6 +111,36 @@ param_down	= dict(  name = input('NAME\t: '),
 					output_size = None,
 					format = 'fits')
 '''
+
+def ps1_image_query(name, ra, dec, size):
+	try: os.mkdir(name)
+	except: pass
+	os.chdir(name)
+
+	for filte in filterlist:
+		print('Query PS1 in {}-band'.format(filte))
+		param_down	= dict(
+							name = name,
+							ra = ra,
+							dec = dec,
+							size = 6000,
+							filters = filte,
+							output_size = None,
+							format = 'fits'
+							)
+		try:
+			downimage_routine(**param_down)
+		except:
+			try:
+				downimage_routine(**param_down)
+			except:
+				downimage_routine(**param_down)
+	os.chdir('../')		
+
+ps1_image_query('NGC3367', 161.645641, 13.750859, 6000)
+
+
+'''
 name, ra, dec = 'GRB201103B_cand1', 42.1845, 12.1358
 filterlist = ['g', 'r', 'i', 'z', 'y']
 for filte in filterlist:

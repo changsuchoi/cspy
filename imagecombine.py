@@ -92,16 +92,10 @@ def imagecombine_epoch(glines):
 		print('='*60,'\n')
 		print(n,'of',len(glines))
 		ii=i[:-1].split(',')
-		if len(ii)==1 : pass
-			#if os.path.isfile(centertimeheader(ii)[1]) : pass
-			#else:
-			#	print("single image")
-			#	os.system('cp '+ii[0]+' '+centertimeheader(ii)[1])
-			#	puthdr(centertimeheader(ii)[1],'DATE-OBS', centertimeheader(ii)[0])
+		if len(ii)==1 :
 			print("single image, change name only")
 			if os.path.isfile(centertimeheader([ii[0]+'s'])[1]) : pass
-			else:
-				os.system('cp '+ii[0]+'s '+centertimeheader([ii[0]+'s'])[1])
+			else: os.system('cp '+ii[0]+'s '+centertimeheader([ii[0]+'s'])[1])
 		else:
 			print('='*60,'\n')
 			if os.path.isfile(centertimeheader(ii)[1]) : pass

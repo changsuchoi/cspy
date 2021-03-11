@@ -116,7 +116,7 @@ WRITE_XML        Y              # Write XML file (Y/N)?
 XML_NAME         sex.xml        # Filename for XML output
 XSL_URL          file:///usr/local/share/sextractor/sextractor.xsl
                                 # Filename for XSL style-sheet
-NTHREADS         1              # 1 single thread
+NTHREADS         5              # 1 single thread
 
 FITS_UNSIGNED    N              # Treat FITS integer values as unsigned (Y/N)?
 INTERP_MAXXLAG   16             # Max. lag along X for 0-weight interpolation

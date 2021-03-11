@@ -30,15 +30,18 @@ print ('oklist', len(oklist),'nolist', len(nolist))
 # with cpu=4, 3 sec for 1 image process
 # after scamp, remove PVX_X keywords in header,
 # cut image less than the size of ref.fits
-for j,im in enumerate(oklist) :
+for j,im in enumerate(imlist) :
 	contnum=scamp_net(im, astref=False, projection='TAN',DETECT_THRESH='3')
 	headmerge(im)
 	fits.setval('sa'+im, 'FLXSCALE', value=1)
 	fits.setval('sa'+im, 'SCAMPCON', value=contnum, hdrcomment='SCAMP cont. num')
-	print(j+1, 'of', len(oklist) )
+	print(j+1, 'of', len(imlist) )
 	print('='*60,'\n')
 
 # multi core with parmap
+imlist=glob.glob('Calib*.fits')
+imlist.sort()
+print(len(imlist))
 import parmap
 stime=time.time()
 cpunum=5
@@ -66,9 +69,13 @@ for im in salist:
 
 ''' 3. imagesetgroup.py '''
 # return clines, salines
-lines=epoch_group(oklist)
-salines=epoch_group(salist)
-len(lines),len(salines)
+caliblist.sort()
+#oklist.sort()
+#caliblist==oklist
+lines=epoch_group(caliblist)
+len(lines)
+#salines=epoch_group(salist)
+#len(salines)
 
 ''' 4. alipy-python3-epoch.py '''
 # gregister for each epoch
@@ -77,10 +84,7 @@ for ii in lines:
     iii=ii[:-1].split(',')
     if len(iii)==1:
         print (iii)
-for ii in salines:
-    iii=ii[:-1].split(',')
-    if len(iii)==1:
-        print (iii)
+
 
 import time
 starttime=time.time()
@@ -99,7 +103,9 @@ glist.sort()
 glines=epoch_group(glist)
 imagecombine_epoch(glines)
 os.system('ls Calib*com.fits | wc -l')
+calcomlist=glob.glob('Calib*com.fits')
 print('imagecombine done')
+print(len(glines), len(calcomlist))
 
 ''' 6. swarprun.py '''
 # image combine for each opoch which saCalib*fits files
@@ -108,6 +114,11 @@ print('imagecombine done')
 salist=glob.glob('saCalib*.fits')
 salist.sort()
 salines=epoch_group(salist)
+print(len(salines))
+for ii in salines:
+    iii=ii[:-1].split(',')
+    if len(iii)==1:
+        print (iii)
 starttime=time.time()
 swarp_epoch(salines)
 endtime=time.time()
@@ -119,10 +130,7 @@ os.system('ls saCalib*com.fits | wc -l')
 # psfex run, get .psf files
 # note. MCD30INCH not good for psfex run
 # return *.psf
-imlist=glob.glob('Calib*.fits')
-imlist.sort()
-print(len(imlist))
-stime=time.time()
+
 '''
 cpunum=2
 if __name__ == '__main__' :
@@ -133,12 +141,15 @@ if __name__ == '__main__' :
 endtime=time.time()
 duration= endtime-starttime
 '''
+imlist=glob.glob('saCalib*.fits')
+imlist.sort()
+print(len(imlist))
 stime=time.time()
-cpunum=3
+cpunum=5
 result=parmap.map(psfexrun, imlist, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
-print('psfexrun done', len(imlist), duration)
+print('psfexrun done', len(imlist), duration/60)
 
 ''' 8. se_1st '''
 # optimal_aper.py
@@ -154,6 +165,11 @@ lowmag=13
 highmag=19
 filname,filerr='R','Rerr'
 #filname,filerr='r','rerr'
+filname,filerr='B','Berr'
+filname,filerr='V','Verr'
+filname,filerr='I','Ierr'
+filname,filerr='g','gerr'
+filname,filerr='i','ierr'
 magtypes=['MAG_AUTO', 'MAG_PSF',
 		'MAG_APER','MAG_APER_1','MAG_APER_2',
 		'MAG_APER_3','MAG_APER_4','MAG_APER_5','MAG_APER_6','MAG_APER_7',
@@ -161,10 +177,9 @@ magtypes=['MAG_AUTO', 'MAG_PSF',
 magtype=magtypes[0]
 refcat='../../ps1-Tonry-NGC3367.cat'
 psf=True
-imlist=glob.glob('*Calib*.fits')
+imlist=glob.glob('saCalib*.fits')
 
 # single core
-'''
 stime=time.time()
 imlist.sort()
 badlist=[]
@@ -180,14 +195,14 @@ for nn,im in enumerate(imlist) :
 print(badlist)
 etime=time.time()
 duration=etime-stime
-print('se_1st done', len(imlist), duration)
-'''
+print('se_1st done', len(imlist), duration/60)
+
 # multiprocess
 import parmap
 imlist.sort()
 stime=time.time()
 cpunum=5
-result=parmap.map(se1st, imlist, psf=False, pm_pbar=True, pm_processes=cpunum)
+result=parmap.map(se1st, imlist, psf=True, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
 print('se_1st done', len(imlist), duration/60)
@@ -218,15 +233,18 @@ for i in badlist:
 # se-2nd-phot-function.py
 # return *.sef (threshold 1.5), *.dat (final catalog)
 os.system('rm *Calib*_seg.fits *Calib*_ap.fits')
-imlist=glob.glob('*Calib*.fits')
+imlist=glob.glob('saCalib*.fits')
 imlist.sort()
 print(len(imlist))
 #single
+badlist=[]
 for j,im in enumerate(imlist):
 	print('='*60,'\n')
 	print(j+1,'of',len(imlist))
 	if os.path.isfile(os.path.splitext(im)[0]+'.dat'):pass
-	else: se2nd(im)
+	else:
+		try: se2nd(im)
+		except:badlist.append(im)
 	#se2nd(im)
 
 # multi core
@@ -271,27 +289,27 @@ Error in write: Select error for <Subprocess '/data7/cschoi/util/iraf-2.16.1-201
 [Errno 32] Broken pipe
 '''
 # trim
-sz=(10,10)
+sz=(20,20)
 pos=(161.645641, 13.750859) # NGC3367
 #salist=glob.glob('saCalib*.fits')
 #salist.sort()
 stime=time.time()
 cpunum=2
-result=parmap.map(trim, imlist, pm_pbar=True, pm_processes=cpunum)
+result=parmap.map(trim, imlist,sizes=sz,positions=pos, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
-cutlist=glob.glob('*Calib*cut.fits')
+cutlist=glob.glob('saCalib*cut.fits')
 print('trim image cut done', len(imlist),len(cutlist), duration/60)
 #trim(im, positions=(False,False), sizes=(10,10))
-imlist=imlist+cutlist
+imlist=cutlist
 ''' 11.1 alipy-ref2in '''
 # registration ref.fits to iuput image, single 2.5sec
 # return reg_Calib*.fits
 #salist=glob.glob('saCalib*.fits')
 #salist.sort()
 stime=time.time()
-cpunum=3
-result=parmap.map(alipy_ref2in, imlist, pm_pbar=True, pm_processes=cpunum)
+cpunum=1
+result=parmap.map(alipy_ref2in, imlist,head='reg_', pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
 regimlist=glob.glob('reg_*Calib*cut.fits')
@@ -312,15 +330,21 @@ print(len(imlist),len(nolist))
 # registration ref.fits to input cut file
 # return rew_*Calib*cut.fits
 # remap2min : remap ref.fits to have the the pixelscale value (least pixel scale -0.001)
-imlist=glob.glob('saCalib*.fits')
+#imlist=glob.glob('saCalib*.fits')# + glob.glob('saCalib*cut.fits')
 imlist.sort()
 print(len(imlist))
 remap2min(imlist, refim='ref.fits')
 stime=time.time()
-cpunum=5
+cpunum=3
 result=parmap.map(wcsremap, imlist, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
+rewlist=glob.glob('rew_*Calib*.fits')
+print('wcsremap done', len(imlist),len(rewlist) ,duration/60)
+
+for im in imlist:
+	print(im)
+	wcsremap(im, refim='saref.fits')
 rewlist=glob.glob('rew_*Calib*.fits')
 print('wcsremap done', len(imlist),len(rewlist) ,duration/60)
 
@@ -338,6 +362,20 @@ duration=etime-stime
 rewlist=glob.glob('res_saCalib*.fits')
 print('spalipy done', len(salist),len(rewlist) ,duration/60)
 
+''' 11.4 wcstools remap '''
+salist=glob.glob('saCalib*.fits')
+salist.sort()
+stime=time.time()
+cpunum=1
+result=parmap.map(remap_ref2in, imlist, refim='ref.fits',pm_pbar=True, pm_processes=cpunum)
+etime=time.time()
+duration=etime-stime
+remlist=glob.glob('rem_*Calib*.fits')
+print('remap_ref2in done', len(imlist),len(remlist), duration/60)
+
+''' 11.5 remap input images '''
+imlist=
+
 # list comprehension
 #fitslist=glob.glob('*Calib*fits')
 #salist=[s for s in fitslist if 'saCalib' in s and 'cut' not in s]
@@ -354,13 +392,31 @@ print('spalipy done', len(salist),len(rewlist) ,duration/60)
 #salist.sort()
 head='reg_'
 head='rew_'
-#reflist=reflist=['rew_'+s for s in salist]
+head='rem_'
+# reflist=reflist=['rew_'+s for s in salist]
+# reference image = multi registered reference images
 stime=time.time()
-cpunum=3
-result=parmap.map(hprun, imlist, head='rew_',pm_pbar=True, pm_processes=cpunum)
+cpunum=2
+result=parmap.map(hprun, imlist,head='rem_',tl=0 ,tu=65000, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
 hdlist=glob.glob('hd'+head+'*.fits')
+print('hotpants run done', len(imlist),len(hdlist), duration/60)
+
+# reference image = 'ref.fits' only
+stime=time.time()
+cpunum=2
+result=parmap.map(hprun_ref, imlist,refim='rem_ref_05min_cut.fits',tl=-10000 ,tu=200000, pm_pbar=True, pm_processes=cpunum)
+etime=time.time()
+duration=etime-stime
+hdlist=glob.glob('hd*.fits')
+print('hotpants run done', len(imlist),len(hdlist), duration/60)
+
+for im in imlist:
+	print(im)
+	hprun(im,head=head,tl=0, tu=65000,ng=False)
+hdlist=glob.glob('hd'+head+'*.fits')
+
 print('hotpants run done', len(imlist),len(hdlist), duration/60)
 '''
 cpunum=2
@@ -370,6 +426,9 @@ if __name__ == '__main__' :
 	p.close()
 	p.join()
 '''
+# single
+
+
 
 
 
@@ -378,7 +437,7 @@ if __name__ == '__main__' :
 # sub image photometry,
 # return mag, magerr or ul5, detection plot
 
-hdlist=glob.glob('hd*Calib*.fits')
+hdlist=glob.glob('hdrew_*Calib*.fits')
 hdlist.sort()
 print(len(hdlist))
 
@@ -394,13 +453,20 @@ resulthead= '#FILE'+'\t'+'MJD'+'\t'+'OBSERVATORY'+'\t'+'FILTER'+'\t'+thead+'\t'+
 print(resulthead)
 f=open(targetname+'-'+os.getcwd().split('/')[-2]+'-'+os.getcwd().split('/')[-1]+'.dat','w')
 f.write(resulthead)
+badsesublist=[]
 for n,im in enumerate(hdlist):
-	body,detect=sub_target_phot(im, tra, tdec)
-	print( im, detect,'\n',body)
-	f.write(body)
-	trimstamp(im, positions=pos, sizes=sz)
-	fitplot_target_stamp(im,tra,tdec,sizes)
+	print('='*60,'\n')
+	try:
+		body,detect=sub_target_phot(im, tra, tdec, sep=5.0)
+		print( im, detect,'\n\n',body)
+		f.write(body)
+		trimstamp(im, positions=pos, sizes=sz)
+		fitplot_target_stamp(im,tra,tdec,sizes)
+	except:
+		print('error, adding to badsesublist')
+		badsesublist.append(im)
 f.close()
+print(badsesublist)
 print('and finally comes to the end ...')
 
 
@@ -410,7 +476,10 @@ print('and finally comes to the end ...')
 ''' 14. final LC photometry data file '''
 
 
-
+def ds9list(imlist):
+	ll=''
+	for l in imlist: ll+=l +' '
+	os.system('ds9 '+ ll+' &')
 
 
 

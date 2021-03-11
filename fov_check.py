@@ -30,4 +30,4 @@ def imcenter_offset(im, ra=161.645641, dec=13.750859,seplimit=10):
 	if sep.arcmin > seplimit :
 		print(im,'Too far away',round(sep.arcmin,0))
 
-for im in caliblist : imcenter_offset(im,seplimit=5)
+for im in caliblist : imcenter_offset(im,seplimit=10)

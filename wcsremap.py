@@ -146,7 +146,7 @@ Usage: remap [-v][-f WCSfile][-a rot][[-b][-j] ra dec][-i bits][-l num] file1.fi
   -y nx ny: Output image dimensions (default is first input image)
 '''
 # remap input images to reference image
-def remap_in2ref(files):
+def remap_in2ref(files,ref='ref.fits'):
 	remapcom='remap -v -f '+ref+' -p '+str(pixscale)+' -o re'+files+' '+files
 	os.system(remapcom)
 	inheader=fits.getheader(files)
@@ -189,6 +189,42 @@ def wcsremap(im,refim='ref.fits'):
 		else:
 			print('make least pixelscale remap_ref.fits first!')
 			return None
+
+def wcsremap_im2ref(im,refim='ref.fits'):
+	#print inim
+	outim='rew_'+im
+	if os.path.isfile(outim):
+		os.system('rm '+outim)
+		#print(outim,'exist, Pass')
+		#return 'Pass'
+		#wcsremapstr='wcsremap -template '+refim+' -source '+im+' -outIm '+outim
+		# match to ref image
+	if pixelscale(refim) >= pixelscale(im):
+		wcsremapstr='wcsremap -template '+refim+' -source '+im+' -outIm '+outim
+		print('normal wcsremap run')
+		try:
+			os.system(wcsremapstr)
+			print (outim,'is created')
+		except: return None
+		return 'Normal'
+	else :
+		print('WCSTools remap and run wcsremap')
+		# os.system('rm '+'remap_'+refim)
+		if os.path.isfile('remap_'+refim):
+			if pixelscale('remap_'+refim) >= pixelscale(im):
+				print('image pixel scale < ref pixelscale', pixelscale(refim), '>=', pixelscale(im))
+				print('WCSTools remap and run wcsremap', 'input',pixelscale(im),'remap ref',pixelscale('remap_'+refim))
+				wcsremapstr='wcsremap -template '+'remap_'+refim+' -source '+im+' -outIm '+outim
+				try:
+					os.system(wcsremapstr)
+					print (outim,'is created')
+					puthdr(outim,'COMMENT','Remapped reference used')
+				except: return None
+
+		else:
+			print('make least pixelscale remap_ref.fits first!')
+			return None
+
 
 def wcsremap_alipyref2in(im, refim='ref.fits', gregister=True):
 	#print inim
@@ -238,6 +274,12 @@ def wcsremap_alipyref2in(im, refim='ref.fits', gregister=True):
 
 # for inim in inlist :
 # 	wcsremap(im,refim='ref.fits')
+def remap_pix(im,pix):
+	print('='*60,'\n',im,'remapping','\n')
+	remap='remap -v -p '+str(pix)+' -o rem_'+im+' '+im
+	os.system(remap)
+
+
 
 '''
 if __name__ == '__main__' :

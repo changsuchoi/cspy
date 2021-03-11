@@ -5,6 +5,7 @@ import glob
 import astropy.io.fits as fits
 import numpy as np
 import subprocess
+from sys import flags
 from astropy.table import Table
 from astropy.stats import sigma_clip
 from astropy.stats import sigma_clipped_stats
@@ -17,26 +18,11 @@ from multiprocessing import Process,Pool
 
 # growth curve fit to estimate optimal aperture size
 
-import os
-import glob
-from sys import flags
-import astropy.io.fits as fits
-import numpy as np
-import subprocess
-from astropy.table import Table
-from astropy.stats import sigma_clip
-from astropy.stats import sigma_clipped_stats
-from astropy.stats import sigma_clipping
-import matplotlib.pyplot as plt
-import seaborn as sns
-from scipy.interpolate import UnivariateSpline
-
 def puthdr(inim, hdrkey, hdrval, hdrcomment=''):
 	from astropy.io import fits
 	hdr = fits.getheader(inim)
 	fits.setval(inim, hdrkey, value=hdrval, comment=hdrcomment)
 	comment = inim+'\t'+'('+hdrkey+'\t'+str(hdrval)+')'
-
 
 def pixelscale(i):
 	cd11 = fits.getheader(i)['CD1_1']
@@ -262,7 +248,7 @@ def limitmag(N, zp, aper, skysigma):			# 3? 5?, zp, diameter [pixel], skysigma
 	return round(upperlimit, 3)
 
 def starcut(mtbl,lowmag=lowmag,highmag=highmag,filname=filname,magtype=magtype):
-	idx=np.where( (mtbl['SNR_WIN'] >20) &
+	idx=np.where( (mtbl['SNR_WIN'] >10) &
 				(mtbl['FLAGS'] == 0) &
 				(mtbl[filname] < highmag) &
 				(mtbl[filname] > lowmag) &
@@ -401,18 +387,6 @@ def fitplot(im, mtbl1, magtype, selected):
 	fig.colorbar(img)
 	plt.savefig(os.path.splitext(im)[0]+'_'+magtype+'_FOV.png')
 	plt.close()
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 '''

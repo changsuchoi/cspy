@@ -36,13 +36,6 @@ for im in imlist:
 	else : flist1.append(im)
 	if 'EXPTIME' not in list(h.keys()): flist2.append(im)
 
-
-
-
-
-
-
-
 h=fits.getheader(im)
 for k in hkey:
 	if k in list(h.keys()): print(k)
@@ -65,9 +58,9 @@ def delhdrkey(im,kwds=kwds):
 			print('removing',k,h[k])
 			fits.delval(im,k)
 
-#for im in imlist:
-#	print(im)
-#	delhdrkey(im)
+for im in imlist:
+	print(im)
+	delhdrkey(im)
 
 kwds=['REFCAT',  'LOWMAG' ,'HIGHMAG',
 'NUM_AUTO','ZP_AUTO' ,'ZPE_AUTO','UL5_AUTO',
@@ -110,9 +103,10 @@ for im in imlist:
 		print('header update',keyword,hdrval)
 		puthdr(im, keyword, hdrval, hdrcomment='')
 	else:pass
+
 keyword='DATE-OBS'
 fixlist=[]
-for im in flist:
+for im in imlist:
 	hdr=fits.getheader(im)
 	if len(hdr[keyword]) < 19 :
 		print(im)
@@ -120,8 +114,9 @@ for im in flist:
 
 
 # MCD30ICH DATE-OBS fix
-dateobs=fits.getheader(im)['DATE-OBS']+'T'+fits.getheader(im)['UT']
-puthdr(im,'DATE-OBS',dateobs)
+for im in caliblist:
+	dateobs=fits.getheader(im)['DATE-OBS']+'T'+fits.getheader(im)['UT']
+	puthdr(im,'DATE-OBS',dateobs)
 # SOAO DATE-OBS fix
 dateobs=fits.getheader(im)['DATE-OBS']+'T'+fits.getheader(im)['TIME-OBS']
 puthdr(im,'DATE-OBS',dateobs)
@@ -130,4 +125,7 @@ puthdr(im,'DATE-OBS',dateobs)
 for im in caliblist:
 	dateobs=fits.getheader(im)['DATE-OBS']+'T'+fits.getheader(im)['TIME-OBS']
 	puthdr(im,'DATE-OBS',dateobs)
-'''
+# MCD30INCH DATE-OBS
+for im in caliblist:
+	dateobs=fits.getheader(im)['DATE-OBS']+'T'+fits.getheader(im)['TIME-OBS']
+	puthdr(im,'DATE-OBS',dateobs)

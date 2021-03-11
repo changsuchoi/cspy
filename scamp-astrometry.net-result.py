@@ -192,6 +192,7 @@ def scamp_astrometry_net(im, astref=False, projection='TAN',DETECT_THRESH='3'):
 	delhdrkey('sa'+im, kwds=kwds)
 	return 'Done'
 
+# for saving reference catalog
 def scamp_astrometry_net0(im,projection='TAN',DETECT_THRESH='3'):
 	contnum=scamp_net0(im,projection=projection,DETECT_THRESH='3')
 	headmerge(im)
@@ -218,7 +219,7 @@ def scamp_non_astrometry_net(im, projection='TAN'):
 	os.system(swarpcom)
 	fits.setval('sa'+im, 'FLXSCALE', value=1)
 	fits.setval('sa'+im, 'SCAMPCON', value=contnum, hdrcomment='SCAMP cont. num')
-
+	delhdrkey('sa'+im, kwds=kwds)
 
 # !swarp t.fits -c default.swarp -PROJECTION_TYPE TPV -IMAGEOUT_NAME=sat.fits
 
