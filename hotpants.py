@@ -81,7 +81,7 @@ def hprun(im, head=head, il=0, iu=65000, tl=0, tu=65000, ng=True, sigmatch=False
 		return 'Done'
 	except : return None
 
-def hprun_ref(im, refim='ref.fits', il=0, iu=65000, tl=0, tu=65000, ng=True, sigmatch=False):
+def hprun_ref(im, refim='ref.fits', il=0, iu=65000, tl=0, tu=65000, ng=False, sigmatch=False):
 	print('='*60,'\n',im, refim,'\n')
 	outfile='hd'+im
 	convfile='hc'+im

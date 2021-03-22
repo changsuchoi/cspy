@@ -8,20 +8,27 @@ def PolyBTS(incat_name='gDcSN2019ein.LCfinal.txt', nircat_name= 'gSN2019ein.NIR.
     from astropy.table import Table
     from astropy.stats import sigma_clip
     from astropy.modeling import models, fitting
+    import astropy.io.ascii as ascii
+    import numpy as np
+
+
     incat  = ascii.read(incat_name)  # Optical bands
-    nircat = ascii.read(nircat_name) # NIR bands
-    f = open('SN2019ein-PolyFitRes.dat', 'w+')
+    # nircat = ascii.read(nircat_name) # NIR bands
+    f = open('SN2018kp-PolyFitRes.dat', 'w+')
     f.write('Tmax TmaxErr MAGmax MmaxErr dM15 dM15Err AbsMAGmax AbsMAGmaxErr\n')
     # Spline interpolation of Phillips Curve
-    PhCurve =  ascii.read('/data1/SN2019ein/work/philips/philips_curve.txt', guess=True)
+    PhCurve =  ascii.read('philips_curve.txt', guess=True)
     PhX     = PhCurve['X'] ; PhY = PhCurve['Y']
     from scipy.interpolate import UnivariateSpline
     f_Ph    = UnivariateSpline(PhCurve['X'], PhCurve['Y'], s=None, k=5)
     xnew = np.linspace(np.min(PhX), np.max(PhX), num=51, endpoint=True)
     xp_array, yp_array = [], []
     bandlist  = ['B', 'V', 'R', 'I', 'J', 'H', 'K']
+    bandlist  = ['B', 'V', 'R', 'I','g','r','i']#, 'J', 'H', 'K']
+    bandlist  = ['B', 'V', 'R', 'I']#,'g','r','i']#, 'J', 'H', 'K']
+
     for band in tqdm(bandlist) :
-        Tmax_Kawabata = 58618.24
+        Tmax_Kawabata = 58618.24 # 58160 (sn 2018kp, around peak)
         if band in ['B', 'V'] :
             degree = 7
             idx   = np.where( (incat[band] != -99) & (incat['MJD'] > Tmax_Kawabata - 5) & (incat['MJD'] < Tmax_Kawabata + 18))[0]
@@ -31,10 +38,10 @@ def PolyBTS(incat_name='gDcSN2019ein.LCfinal.txt', nircat_name= 'gSN2019ein.NIR.
         elif band in ['I'] :
             degree = 9
             idx   = np.where( (incat[band] != -99) & (incat['MJD'] > Tmax_Kawabata - 7) & (incat['MJD'] < Tmax_Kawabata + 18))[0]
-        elif band in ['J', 'H', 'K'] :
-            degree = 3
-            incat = nircat
-            idx   = np.where(  (incat[band] != -99) & (incat['MJD'] > Tmax_Kawabata - 13) & (incat['MJD'] < Tmax_Kawabata + 7))[0]
+        #elif band in ['J', 'H', 'K'] :
+        #    degree = 3
+        #    incat = nircat
+        #    idx   = np.where(  (incat[band] != -99) & (incat['MJD'] > Tmax_Kawabata - 13) & (incat['MJD'] < Tmax_Kawabata + 7))[0]
         x_data    = incat['MJD'][idx]
         y_data    = incat[band][idx]
         yerr_data = incat[band+'err'][idx]
@@ -59,7 +66,8 @@ def PolyBTS(incat_name='gDcSN2019ein.LCfinal.txt', nircat_name= 'gSN2019ein.NIR.
             if ReChisq == -99 :
                 pass
             else :
-                xp     =  np.linspace(np.min(sample['x']), np.max(sample['x']), num= int((np.max(sample['x'])-np.min(sample['x']))/(5.*(1./24)*(1./60)))) # 1min interval
+                xp     =  np.linspace(np.min(sample['x']), np.max(sample['x']),
+                                    num= int((np.max(sample['x'])-np.min(sample['x']))/(5.*(1./24)*(1./60)))) # 1min interval
                 yp     =  best_fit(xp)
                 if i == 0 :
                     xp_array = list(xp)

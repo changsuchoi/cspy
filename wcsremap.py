@@ -104,14 +104,24 @@ def pixelscale(i):
 	#print('Pixel scale =', pixscale,'\"')
 	return pixscale
 
-def remap2min(salist, refim='ref.fits'):
+def remap2min(imlist, refim='ref.fits'):
 	os.system('rm remap_'+refim)
 	import astropy.io.fits as fits
 	import numpy as np
-	pslist=[fits.getheader(s)['PSCALE'] for s in salist]
+	pslist=[fits.getheader(s)['PSCALE'] for s in imlist]
 	print('the least pixelscale =',np.min(pslist))
 	os.system('remap -v -p '+str(np.min(pslist)-0.001)+' -o remap_'+refim+' '+refim)
 	print('remap_'+refim, pixelscale('remap_'+refim))
+
+def remap2max(imlist, refim='ref.fits'):
+	os.system('rm remap_'+refim)
+	import astropy.io.fits as fits
+	import numpy as np
+	pslist=[fits.getheader(s)['PSCALE'] for s in imlist]
+	print('the largest pixelscale =',np.max(pslist))
+	os.system('remap -v -p '+str(np.max(pslist)+0.001)+' -o remap_'+refim+' '+refim)
+	print('remap_'+refim, pixelscale('remap_'+refim))
+
 #remap reference image to input image
 
 def remap_ref2in(im, refim='ref.fits'):

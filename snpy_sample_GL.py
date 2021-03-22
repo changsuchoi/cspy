@@ -13,6 +13,15 @@ J = snpy.filters.filter('J',file='/data1/SN2019ein/work/lc_v2/filters/UKIRT_WFCA
 H = snpy.filters.filter('H',file='/data1/SN2019ein/work/lc_v2/filters/UKIRT_WFCAM.H_filter.dat', zp=1.142e-10, comment='WFCAM H, Vega, erg/cm2/s/A')
 K = snpy.filters.filter('K',file='/data1/SN2019ein/work/lc_v2/filters/UKIRT_WFCAM.K_filter.dat', zp=3.808e-11, comment='WFCAM K, Vega, erg/cm2/s/A')
 '''
+
+Bd=ascii.read('SN2018kp-B.dat')
+Vd=ascii.read('SN2018kp-V.dat')
+Rd=ascii.read('SN2018kp-R.dat')
+Id=ascii.read('SN2018kp-I.dat')
+gd=ascii.read('SN2018kp-g.dat')
+rd=ascii.read('SN2018kp-r.dat')
+iid=ascii.read('SN2018kp-i.dat')
+
 datpath = '/data1/SN2019ein/work/lc_v2/'
 s = snpy.get_sn(datpath+'SN2019ein_snpy.txt', sql=None)
 ​

@@ -34,8 +34,8 @@ def EarlyFit1(incat_name='hgDcSN2019ein.LCfinal.txt', fitcat_name='SN2019ein-Pol
     import lmfit
     MyModel = lmfit.Model(MyFunc)
     params  = lmfit.Parameters()
-    a_init  = 2
-    m0_init = 19.
+    a_init  = 2 # alpha, fireball
+    m0_init = 19. # normalize, initial value
     params.add('m0B', m0_init)
     params.add('aB', a_init)
     params.add('m0V', m0_init)
@@ -44,7 +44,7 @@ def EarlyFit1(incat_name='hgDcSN2019ein.LCfinal.txt', fitcat_name='SN2019ein-Pol
     params.add('aR', a_init)
     params.add('m0I', m0_init)
     params.add('aI', a_init)
-    params.add('t0', 58603)
+    params.add('t0', 58603) # ealier than first detection time , ex) -1
     MyData  = np.concatenate((ydata1, ydata2, ydata3, ydata4))
     MyError = np.concatenate((ydataerr1, ydataerr2, ydataerr3, ydataerr4))
     o1 = MyModel.fit(MyData, params, xdata=xdata, weights=1./MyError, method='leastsq')

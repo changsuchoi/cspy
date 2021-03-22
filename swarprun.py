@@ -11,6 +11,7 @@ import os, sys
 import numpy as np
 import matplotlib.pyplot as plt
 from multiprocessing import Process,Pool
+import glob
 
 os.system('swarp -d > default.swarp')
 
@@ -94,10 +95,10 @@ def radec_center(im):
 	racent, deccent = racent.item(), deccent.item()
 	return rastr,decstr,racent,deccent
 
-salist=glob.glob('saCalib*.fits')
-salist.sort()
-salines=epoch_group(salist)
-#salines[-1][:-1].split(',')
+# salist=glob.glob('saCalib*.fits')
+# salist.sort()
+# salines=epoch_group(salist)
+# salines[-1][:-1].split(',')
 def swarp_epoch(salines):
 	for n,i in enumerate(salines):
 		print('='*60,'\n')

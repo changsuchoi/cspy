@@ -170,9 +170,9 @@ hdr1.extend(fits.Header.fromtextfile(iname+'.head'), update=True, update_first=T
 fits.writeto('a'+inim,fits.getdata(inim),hdr1)
 '''
 kwds=['PV1_0', 'PV1_1', 'PV1_2', 'PV1_3', 'PV1_4', 'PV1_5',
-		'PV1_6', 'PV1_7', 'PV1_8', 'PV1_9', 'PV1_10',
+		'PV1_6', 'PV1_7', 'PV1_8', 'PV1_9', 'PV1_10','PV1_11',
 		'PV2_0', 'PV2_1', 'PV2_2', 'PV2_3', 'PV2_4', 'PV2_5',
-		'PV2_6', 'PV2_7', 'PV2_8', 'PV2_9', 'PV2_10']
+		'PV2_6', 'PV2_7', 'PV2_8', 'PV2_9', 'PV2_10','PV2_11']
 # kwds=['PV1_5', 'PV1_6', 'PV1_7', 'PV1_8', 'PV1_9', 'PV1_10']
 def delhdrkey(im,kwds=kwds):
 	h=fits.getheader(im)

@@ -47,9 +47,9 @@ for k in hkey:
 #h.remove('PV1_0')
 
 kwds=['PV1_0', 'PV1_1', 'PV1_2', 'PV1_3', 'PV1_4', 'PV1_5',
-		'PV1_6', 'PV1_7', 'PV1_8', 'PV1_9', 'PV1_10',
+		'PV1_6', 'PV1_7', 'PV1_8', 'PV1_9', 'PV1_10','PV1_11',
 		'PV2_0', 'PV2_1', 'PV2_2', 'PV2_3', 'PV2_4', 'PV2_5',
-		'PV2_6', 'PV2_7', 'PV2_8', 'PV2_9', 'PV2_10']
+		'PV2_6', 'PV2_7', 'PV2_8', 'PV2_9', 'PV2_10','PV2_11']
 # kwds=['PV1_5', 'PV1_6', 'PV1_7', 'PV1_8', 'PV1_9', 'PV1_10']
 def delhdrkey(im,kwds=kwds):
 	h=fits.getheader(im)
@@ -106,7 +106,7 @@ for im in imlist:
 
 keyword='DATE-OBS'
 fixlist=[]
-for im in imlist:
+for im in caliblist:
 	hdr=fits.getheader(im)
 	if len(hdr[keyword]) < 19 :
 		print(im)
@@ -118,8 +118,9 @@ for im in caliblist:
 	dateobs=fits.getheader(im)['DATE-OBS']+'T'+fits.getheader(im)['UT']
 	puthdr(im,'DATE-OBS',dateobs)
 # SOAO DATE-OBS fix
-dateobs=fits.getheader(im)['DATE-OBS']+'T'+fits.getheader(im)['TIME-OBS']
-puthdr(im,'DATE-OBS',dateobs)
+for im in fixlist:
+	dateobs=fits.getheader(im)['DATE-OBS']+'T'+fits.getheader(im)['TIME-OBS']
+	puthdr(im,'DATE-OBS',dateobs)
 
 # MAO SNUCAM DATE-OBS fix
 for im in caliblist:
@@ -129,3 +130,7 @@ for im in caliblist:
 for im in caliblist:
 	dateobs=fits.getheader(im)['DATE-OBS']+'T'+fits.getheader(im)['TIME-OBS']
 	puthdr(im,'DATE-OBS',dateobs)
+
+
+for im in imlist:
+	delhdrkey(im,kwds=['UL5_OPTA'])

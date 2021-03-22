@@ -1,3 +1,5 @@
+# SNCOSMO LC fitting
+
 def sncosmoTable(incat_name='gDcSN2019ein.LCfinal.txt'):
     incat = ascii.read(incat_name)
     FLT   = ['B','V','R','I']
@@ -39,6 +41,8 @@ def sncosmoTable(incat_name='gDcSN2019ein.LCfinal.txt'):
             else :
                 pass
     f.close()
+
+
 def sncosmoFit(datacat_name='sncosmo_SN2019ein.exact.txt'):
     """
     z  =  0.007166 ; NED
@@ -56,7 +60,7 @@ def sncosmoFit(datacat_name='sncosmo_SN2019ein.exact.txt'):
     #source = sncosmo.SALT2Source(modeldir='/home/lim9/.astropy/cache/sncosmo/models/salt2/salt2-4')
     ### Applying cuts
     minsnr = 3
-    tl     = data['mjd'][0] 
+    tl     = data['mjd'][0]
     tu     = data['mjd'][0] +50.
     #mask = (data['mjd'] >= tl) & (data['mjd'] < tu)
     #mask = (data['mjd'] >= tl) & (data['mjd'] < tu) & (data['flux'] / data['fluxerr'] > minsnr)

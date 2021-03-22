@@ -19,17 +19,66 @@ print ('oklist', len(oklist),'nolist', len(nolist))
 '''  1.a FOV check '''
 # fov-check.py field separation > 10 arcmin
 # move them to bad/ directory
+ra,dec=71.4270833, -59.2471806 # NGC1672
 
+ra,dec=178.206042,   44.120722 # NGC3938
+for im in caliblist : imcenter_offset(im,ra=ra,dec=dec,seplimit=10)
 '''  1.b header check '''
 # DATE-OBS, EXPTIME, FILTER
 # header-fix.py
+!gethead Calib*.fits DATE-OBS EXPTIME
 
-''' 2. scamp-astrometry.net-result.py '''
+''' 2. imagesetgroup.py '''
+# return clines, salines
+caliblist.sort()
+#oklist.sort()
+#caliblist==oklist
+lines=epoch_group(caliblist)
+len(lines)
+#salines=epoch_group(salist)
+#len(salines)
+
+''' 3. alipy-python3-epoch.py '''
+# gregister for each epoch
+# single image check
+for ii in lines:
+    iii=ii[:-1].split(',')
+    if len(iii)==1:
+        print (iii)
+
+import time
+starttime=time.time()
+alipy_epoch(lines)
+endtime=time.time()
+duration= endtime-starttime
+glist=glob.glob('Calib*gregister.fits')
+glist.sort()
+print('alipy work done', duration, len(glist))
+
+''' 4. imagecombine.py '''
+# image combine for each epoch with Calib*gregister.fits files
+# return Calib*-180_com.fits
+glist=glob.glob('Calib*gregister.fits')
+glist.sort()
+glines=epoch_group(glist)
+imagecombine_epoch(glines)
+os.system('ls Calib*com.fits | wc -l')
+calcomlist=glob.glob('Calib*com.fits')
+print('imagecombine done')
+print(len(glines), len(calcomlist))
+
+''' 5. scamp-astrometry.net-result.py '''
 # multiprocessing cpu=4 projection='TPV'
 # return saCalib*.fits, salist
 # with cpu=4, 3 sec for 1 image process
 # after scamp, remove PVX_X keywords in header,
 # cut image less than the size of ref.fits
+import time
+import parmap
+imlist=glob.glob('Calib*.fits')
+imlist.sort()
+print(len(imlist))
+
 for j,im in enumerate(imlist) :
 	contnum=scamp_net(im, astref=False, projection='TAN',DETECT_THRESH='3')
 	headmerge(im)
@@ -39,10 +88,6 @@ for j,im in enumerate(imlist) :
 	print('='*60,'\n')
 
 # multi core with parmap
-imlist=glob.glob('Calib*.fits')
-imlist.sort()
-print(len(imlist))
-import parmap
 stime=time.time()
 cpunum=5
 result=parmap.map(scamp_astrometry_net, imlist, pm_pbar=True, pm_processes=cpunum)
@@ -58,54 +103,19 @@ salist=glob.glob('saCalib*.fits')
 salist.sort()
 print(len(oklist),len(salist))
 
-''' 2.a. remove PVx_x keyword for saCalib*.fits '''
+imlist=glob.glob('saCalib*.fits')
+for im in imlist:
+	print(im)
+	delhdrkey(im)
+
+''' 5.a. remove PVx_x keyword for saCalib*.fits '''
 # header-fix.py delhdrkey()
 kwds=['PV1_0', 'PV1_1', 'PV1_2', 'PV1_3', 'PV1_4', 'PV1_5',
-		'PV1_6', 'PV1_7', 'PV1_8', 'PV1_9', 'PV1_10',
+		'PV1_6', 'PV1_7', 'PV1_8', 'PV1_9', 'PV1_10','PV1_11'
 		'PV2_0', 'PV2_1', 'PV2_2', 'PV2_3', 'PV2_4', 'PV2_5',
-		'PV2_6', 'PV2_7', 'PV2_8', 'PV2_9', 'PV2_10']
+		'PV2_6', 'PV2_7', 'PV2_8', 'PV2_9', 'PV2_10','PV2_11']
 for im in salist:
 	delhdrkey(im,kwds=kwds)
-
-''' 3. imagesetgroup.py '''
-# return clines, salines
-caliblist.sort()
-#oklist.sort()
-#caliblist==oklist
-lines=epoch_group(caliblist)
-len(lines)
-#salines=epoch_group(salist)
-#len(salines)
-
-''' 4. alipy-python3-epoch.py '''
-# gregister for each epoch
-# single image check
-for ii in lines:
-    iii=ii[:-1].split(',')
-    if len(iii)==1:
-        print (iii)
-
-
-import time
-starttime=time.time()
-alipy_epoch(lines)
-endtime=time.time()
-duration= endtime-starttime
-glist=glob.glob('Calib*gregister.fits')
-glist.sort()
-print('alipy work done', duration, len(glist))
-
-''' 5. imagecombine.py '''
-# image combine for each epoch with Calib*gregister.fits files
-# return Calib*-180_com.fits
-glist=glob.glob('Calib*gregister.fits')
-glist.sort()
-glines=epoch_group(glist)
-imagecombine_epoch(glines)
-os.system('ls Calib*com.fits | wc -l')
-calcomlist=glob.glob('Calib*com.fits')
-print('imagecombine done')
-print(len(glines), len(calcomlist))
 
 ''' 6. swarprun.py '''
 # image combine for each opoch which saCalib*fits files
@@ -145,7 +155,7 @@ imlist=glob.glob('saCalib*.fits')
 imlist.sort()
 print(len(imlist))
 stime=time.time()
-cpunum=5
+cpunum=3
 result=parmap.map(psfexrun, imlist, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
@@ -164,18 +174,25 @@ DEBLEND_MINCONT = str(0.005)
 lowmag=13
 highmag=19
 filname,filerr='R','Rerr'
-#filname,filerr='r','rerr'
+filname,filerr='r','rerr'
+filname,filerr='r_psf','e_r_psf'
 filname,filerr='B','Berr'
 filname,filerr='V','Verr'
 filname,filerr='I','Ierr'
 filname,filerr='g','gerr'
+filname,filerr='u_psf','e_u_psf'
+filname,filerr='g_psf','e_g_psf'
 filname,filerr='i','ierr'
+filname,filerr='i_psf','e_i_psf'
+filname,filerr='z_psf','e_z_psf'
+
 magtypes=['MAG_AUTO', 'MAG_PSF',
 		'MAG_APER','MAG_APER_1','MAG_APER_2',
 		'MAG_APER_3','MAG_APER_4','MAG_APER_5','MAG_APER_6','MAG_APER_7',
 		'MAG_APER_8']
 magtype=magtypes[0]
 refcat='../../ps1-Tonry-NGC3367.cat'
+refcat='../../ps1-Tonry-NGC3938.cat'
 psf=True
 imlist=glob.glob('saCalib*.fits')
 
@@ -216,7 +233,7 @@ print (badlist)
 
 for i in badlist:
 	print(i)
-	os.system('mv '+os.path.splitext(i)[0]+'* bad/')
+	os.system('mv *'+os.path.splitext(i)[0][2:]+'* bad/')
 
 
 # 16sec for 1 image
@@ -246,6 +263,8 @@ for j,im in enumerate(imlist):
 		try: se2nd(im)
 		except:badlist.append(im)
 	#se2nd(im)
+print (badlist)
+print('se2nd finished')
 
 # multi core
 import parmap
@@ -274,8 +293,12 @@ os.system('rm *ap.fits *seg.fits')
 #	imcopy(im,position=(ra,dec))
 os.system('rm *Calib*cut.fits')
 size = 10 # arcmin unit, length of square side
-ra,dec=161.645641, 13.750859
-positions=(161.645641, 13.750859)
+ra,dec=161.645641, 13.750859 #NGC3367
+ra,dec=71.4270833, -59.2471806 # NGC1672
+ra,dec=71.45625, -59.245139 #NGC1672
+ra,dec=178.206042,   44.120722 #NGC3938
+
+positions=(ra,dec)
 stime=time.time()
 cpunum=3
 result=parmap.map(imcopy, imlist, pm_pbar=True, pm_processes=cpunum)
@@ -290,7 +313,8 @@ Error in write: Select error for <Subprocess '/data7/cschoi/util/iraf-2.16.1-201
 '''
 # trim
 sz=(20,20)
-pos=(161.645641, 13.750859) # NGC3367
+sz=(10,10)
+pos=(ra,dec) # NGC3367
 #salist=glob.glob('saCalib*.fits')
 #salist.sort()
 stime=time.time()
@@ -301,7 +325,28 @@ duration=etime-stime
 cutlist=glob.glob('saCalib*cut.fits')
 print('trim image cut done', len(imlist),len(cutlist), duration/60)
 #trim(im, positions=(False,False), sizes=(10,10))
-imlist=cutlist
+imlist=cutlist +imlist
+
+#single core
+badlist=[]
+sz=(10,10)
+pos=(ra,dec)
+for j,im in enumerate(imlist):
+	print('='*60,'\n')
+	print(j+1,'of',len(imlist))
+	#if os.path.isfile(os.path.splitext(im)[0]+'.dat'):pass
+	#else:
+	try: trim(im, positions=pos, sizes=sz)
+	except:badlist.append(im)
+	#se2nd(im)
+print (badlist)
+
+''' 11. registration, align '''
+scamp astrometry first ('ref.fits')
+os.system('mv ref.fits ref.fits.old')
+os.system('mv saref.fits ref.fits')
+
+
 ''' 11.1 alipy-ref2in '''
 # registration ref.fits to iuput image, single 2.5sec
 # return reg_Calib*.fits
@@ -335,8 +380,8 @@ imlist.sort()
 print(len(imlist))
 remap2min(imlist, refim='ref.fits')
 stime=time.time()
-cpunum=3
-result=parmap.map(wcsremap, imlist, pm_pbar=True, pm_processes=cpunum)
+cpunum=4
+result=parmap.map(wcsremap, imlist, refim='ref.fits',pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
 rewlist=glob.glob('rew_*Calib*.fits')
@@ -396,8 +441,8 @@ head='rem_'
 # reflist=reflist=['rew_'+s for s in salist]
 # reference image = multi registered reference images
 stime=time.time()
-cpunum=2
-result=parmap.map(hprun, imlist,head='rem_',tl=0 ,tu=65000, pm_pbar=True, pm_processes=cpunum)
+cpunum=4
+result=parmap.map(hprun, imlist,head='rew_',tl=0 ,tu=65000, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
 hdlist=glob.glob('hd'+head+'*.fits')
@@ -416,8 +461,14 @@ for im in imlist:
 	print(im)
 	hprun(im,head=head,tl=0, tu=65000,ng=False)
 hdlist=glob.glob('hd'+head+'*.fits')
-
 print('hotpants run done', len(imlist),len(hdlist), duration/60)
+
+for im in imlist:
+	print(im)
+	hprun_ref(im,tl=0, tu=65000,ng=False)
+hdlist=glob.glob('hd'+head+'*.fits')
+print('hotpants run done', len(imlist),len(hdlist), duration/60)
+
 '''
 cpunum=2
 if __name__ == '__main__' :
@@ -443,6 +494,10 @@ print(len(hdlist))
 
 targetname='SN2018kp'
 tra,tdec=161.637792, 13.741869
+targetname='SN2017gax'
+tra,tdec=71.45625, -59.245139
+targetname='SN2017ein'
+tra,tdec=178.221875, 44.123919
 pos=(tra,tdec)
 sizes=(5,5)
 sz=sizes
