@@ -1,3 +1,4 @@
+
 import numpy as np
 import astropy.units as u
 from astropy.table import Table, Column
@@ -177,4 +178,6 @@ fils=['B','V','R,','I']
 for n,i in enumerate(stdfil):
 	if list(i)[3] != np.min(list(i)):
 		#list(i).index(np.min(list(i)))
-		print (selist[n], fils[list(i).index(np.min(list(i)))])
+		print (selist[n],'\t', fils[list(i).index(np.min(list(i)))],
+				round(i[0],2),round(i[1],2),round(i[2],2),round(i[3],2)
+				)

@@ -13,7 +13,8 @@ def EarlyFit1(incat_name='hgDcSN2019ein.LCfinal.txt', fitcat_name='SN2019ein-Pol
     # Light curve data (MW & Host reddening corrected)
     incat    = ascii.read(incat_name)
     earlycat = incat[incat['MJD'] < incat['MJD'][0] + 8.3]
-    fitidx   = np.where((earlycat['B'] != -99) & (earlycat['V'] != -99) & (earlycat['R'] != -99) & (earlycat['I'] != -99))[0]
+    fitidx   = np.where((earlycat['B'] != -99) & (earlycat['V'] != -99) &
+                        (earlycat['R'] != -99) & (earlycat['I'] != -99))[0]
     xdata    = earlycat['MJD'][fitidx]
     ydata1   =   earlycat['B'][fitidx]
     ydata2   =   earlycat['V'][fitidx]
@@ -53,11 +54,23 @@ def EarlyFit1(incat_name='hgDcSN2019ein.LCfinal.txt', fitcat_name='SN2019ein-Pol
     #ChiSq = residual.sum()
     #Reduced_ChiSq = ChiSq / (len(MyData) - 9)
     #fit_params = o1.params
-    m0B, m0V, m0R, m0I = o1.params['m0B'].value, o1.params['m0V'].value, o1.params['m0R'].value, o1.params['m0I'].value
-    m0BErr, m0VErr, m0RErr, m0IErr = o1.params['m0B'].stderr, o1.params['m0V'].stderr, o1.params['m0R'].stderr, o1.params['m0I'].stderr
-    aB, aV, aR, aI = o1.params['aB'].value, o1.params['aV'].value, o1.params['aR'].value, o1.params['aI'].value
-    aBErr, aVErr, aRErr, aIErr = o1.params['aB'].stderr, o1.params['aV'].stderr, o1.params['aR'].stderr, o1.params['aI'].stderr
-    t0, t0Err = o1.params['t0'].value, o1.params['t0'].stderr
+    m0B, m0V, m0R, m0I = o1.params['m0B'].value, o1.params['m0V'].value, \
+                            o1.params['m0R'].value,\
+                            o1.params['m0I'].value
+    m0BErr, m0VErr, m0RErr, m0IErr = o1.params['m0B'].stderr,\
+                                    o1.params['m0V'].stderr, \
+                                    o1.params['m0R'].stderr, \
+                                    o1.params['m0I'].stderr
+    aB, aV, aR, aI = o1.params['aB'].value, \
+                    o1.params['aV'].value, \
+                    o1.params['aR'].value, \
+                    o1.params['aI'].value
+    aBErr, aVErr, aRErr, aIErr = o1.params['aB'].stderr, \
+                                o1.params['aV'].stderr, \
+                                o1.params['aR'].stderr, \
+                                o1.params['aI'].stderr
+    t0, t0Err = o1.params['t0'].value, \
+                o1.params['t0'].stderr
     # Fitting lines (total data)
     #x       = np.linspace(t0, np.max(earlycat['MJD'][fitidx]), num = int(  (np.max(earlycat['MJD'][fitidx]))/(360.*(1./24)*(1./60)))  ) # 360 min int.
     x       = np.linspace(t0, np.max(earlycat['MJD'][fitidx]), num = len(earlycat['MJD'][fitidx])*2 )
@@ -76,5 +89,7 @@ def EarlyFit1(incat_name='hgDcSN2019ein.LCfinal.txt', fitcat_name='SN2019ein-Pol
         # Residuals
         allidx = np.where((incat[band] != -99) & (incat['MJD'] < incat['MJD'][0] + 8.3))[0]
         residual = incat[band][allidx] - (m0 - 2.5*a*np.log10(incat['MJD'][allidx] - t0))
-        resitbl  = Table({'OBS' : incat['OBS'][allidx], 'xr' :incat['MJD'][allidx], 'yr' : residual, 'yrerr' : incat[band+'err'][allidx]}, names=['OBS', 'xr', 'yr', 'yrerr'])
+        resitbl  = Table({'OBS' : incat['OBS'][allidx],
+                        'xr' :incat['MJD'][allidx], 'yr' : residual,
+                        'yrerr' : incat[band+'err'][allidx]}, names=['OBS', 'xr', 'yr', 'yrerr'])
         ascii.write(resitbl, output='SN2019ein-SPLXY-Residual_case{}_{}.dat'.format(case, band), overwrite=True)

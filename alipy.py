@@ -74,14 +74,14 @@ def alipyrun(im,ref_image):
 
 # match input images to ref image
 # input image will be aligned to ref image, no change in ref image
-def alipy_in2ref(ref_image,images_to_align):
+def alipy_in2ref(ref_image,images_to_align,head='reg_'):
     '''
     images_to_align should be a list!
     '''
     identifications= identify_transform(ref_image, images_to_align, rad= 5, nb=500, verbose=False, visual=False)
     align_images(ref_image, identifications, iraf=True, outdir='alipy_out')
     for i in images_to_align :
-        newname = 'reg_'+os.path.splitext(i)[0]+os.path.splitext(i)[1]
+        newname = head+os.path.splitext(i)[0]+os.path.splitext(i)[1]
         os.system('mv alipy_out/'+os.path.splitext(i)[0]+'_gregister'+os.path.splitext(i)[1]+' '+newname)
 
 # match ref image to input image

@@ -248,6 +248,8 @@ dat.add_column(dat['MAG']-GE['i'],name='MAG_GEC')
 dat.write('GE_'+'SN2018kp-i.dat',format='ascii.commented_header')
 
 
+
+
 # B-V color
 d1=dset[4]
 d2=dset[7]
@@ -261,9 +263,9 @@ vsd=vstack([dd1,dd2])
 vsd.sort('MJD')
 vsd0=vsd[vsd['DET']=='Y']
 
-def near_filter_diff(vsd, row_index,std='B'):
+def near_filter_diff(vsd, row_index,std='V'):
     vsd.sort('MJD')
-    vtt=vsd['MJD_GEC']
+    #vtt=vsd['MJD']
     vft=vsd['FILTER']
     tt=vsd[row_index]['MJD']
     ft=vsd[row_index]['FILTER']
@@ -294,7 +296,7 @@ def near_filter_diff(vsd, row_index,std='B'):
 cmjd,cmjddiff,cmag,cerr=[],[],[],[]
 for i,n in enumerate(vsd0):
     print(i,n['MJD'],n['FILTER'])
-    cres=near_filter_diff(vsd0, i,std='B')
+    cres=near_filter_diff(vsd0, i,std='V')
     cmjd.append(cres[1])
     cmjddiff.append(cres[2])
     cmag.append(cres[3])

@@ -138,7 +138,7 @@ def secom_defringe(im, backsize=64, backfiltersize=3, backphototype='LOCAL'):
 	line = [s for s in sexout.split('\n') if 'RMS' in s]
 	skymed = float(line[0].split('Background:')[1].split('RMS:')[0])
 	skysig= float(line[0].split('RMS:')[1].split('/')[0])
-	os.system(secommand)
+	#os.system(secommand)
 	return skymed, skysig
 
 # subtraction

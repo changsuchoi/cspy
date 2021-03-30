@@ -1,3 +1,74 @@
+def GetDist(fitcat_name='SN2019ein-PolyFitRes.dat'):
+    """
+    DM = m - M
+    DMErr = sqrt(mErr**2 + MErr**2)
+    """
+    fitcat = ascii.read(fitcat_name)    Bmax    = fitcat['MAGmax'][0]
+    BmaxErr = fitcat['MmaxErr'][0]    AbsBmax    = fitcat['AbsMAGmax'][0]
+    AbsBmaxErr = fitcat['AbsMAGmaxErr'][0]    Host    = GetEBVhost(fitcat_name)
+    Ahost_B = Host['Ahost'][0]    DM    = Bmax - AbsBmax - Ahost_B
+    DMErr = np.sqrt(BmaxErr**2 + AbsBmaxErr**2)
+    D     = (10.**((DM+5.)/5))/1.e+06
+    DErr  = ((10.**(0.2*(DM+5)))*0.2*np.log(10)*DMErr)/1.e+06
+    print('Distance modulus is estimated as {}+/-{} mag'.format(round(DM, 3), round(DMErr, 3)))
+    print('Distance is estimated as {}+/-{} Mpc'.format(round(D, 3), round(DErr,3)))
+    return {'DM' : DM, 'DMErr' : DMErr, 'D' : D, 'DErr': DErr}
+
+def CalChiSq(fit, x, y, yerr, N, n_free) :
+    '''
+    fit        : Input array from the fitting. ex. simplePL(t, x, *popt)
+    x, y, yerr : Input data set as array.
+    N          : Total number of data points. ex. len(y)
+    n_free     : The number of parameters that we are fitting. If the model has no free parameter then dof = N. If we are fitting a model with n_free free parameters, we can force the model to exactly agree with n_free data points and dof = N - n_free.     '''
+    #if sum(((fit - y)/yerr)**2) > 1.e-03 :
+    if N-n_free <= N :
+        if sum(((fit - y)/yerr)**2) == 0 :
+            print('fit - y = 0, Rejected')
+            RedCSQ = -99
+        else :
+            RedCSQ = (1.0/(N-n_free))*sum(((fit - y)/yerr)**2)
+    else :
+        print('N-n_free <= N, this will be rejected.')
+        RedCSQ = -99
+    return RedCSQ
+
+def GetEBVhost(fitcat_name = 'SN2019ein-PolyFitRes.dat') :
+    """
+    Bring the result of polynomial fitting.
+    ==== Host galaxy extinction (Philips+99) ==='
+    E(B-V)host = (Bmax - Vmax)c - (Bmax - Vmax)0
+    (Bmax - Vmax)c = (Bmax -Vmax)obs - E(B-V)gal - K_BmaxVmax
+    (Bmax - Vmax)0 = -0.07(+/-0.012) +0.114(+/-0.037)*(dB15-1.1), sigma   = 0.03
+    BVRIJHK = 01234567
+    """
+    import extinction
+    fitcat  = ascii.read('SN2019ein-PolyFitRes.dat')
+    MAGmax  = fitcat['MAGmax']; MAGmaxErr = fitcat['MmaxErr']
+    Bmax    = MAGmax[0]       ; Vmax      = MAGmax[1]
+    BmaxErr = MAGmaxErr[0]    ; VmaxErr   = MAGmaxErr[1]
+    dM15    = fitcat['dM15']  ; dM15Err   = fitcat['dM15Err']
+    dB15    = dM15[0]         ; dB15Err  = dM15Err[0]    BVmaxObs      = Bmax - Vmax # Galactic extinction corrected
+    # BVmaxObs here is BVmaxobs - (A_B-A_V) in the previous code.
+    BVmaxObsErr   = np.sqrt(BmaxErr**2 + VmaxErr**2)
+    K_BmaxVmax    = 0. # Assumption for a local object.
+    BVmax0        = -0.07 + 0.114*(dB15 - 1.1)
+    BVmax0_Sigma  = 0.03
+    BVmax0Err     = np.sqrt(BVmax0_Sigma**2 + dB15Err**2)
+    BVmaxc        = BVmaxObs - K_BmaxVmax
+    EBVhost       = BVmaxc - BVmax0
+    EBVhostErr    = np.sqrt(BVmaxObsErr**2 + BVmax0Err**2)    Rv_gal    = 3.1; Rv_HV = 1.55 # +/-0.06 (Wang+09)
+    Ahost_V   = EBVhost * Rv_gal
+    FilterSet = np.array([4353., 5477, 6349., 8797., 12483.0, 16313.0, 22010.0])
+    Ahost     = extinction.fitzpatrick99(FilterSet, Ahost_V, Rv_gal)    print('*** Host Galaxy Extinction (Philips+99) Results ***')
+    print('E(B-V)host = (Bmax - Vmax)c - (Bmax - Vmax)0')
+    print('(Bmax - Vmax)c = (Bmax -Vmax)obs - E(B-V)gal - K_BmaxVmax')
+    print('(Bmax - Vmax)0 = -0.07(+/-0.012) +0.114(+/-0.037)*(dB15-1.1), sigma = 0.03')
+    print('(Bmax - Vmax)0 = {}+/-{} (MW corrected)'.format(round(BVmaxObs, 3), round(BVmaxObsErr,3)))
+    print('(Bmax - Vmax)c = {} (K-correction = {})'.format(round(BVmaxc, 3), K_BmaxVmax))
+    print('E(B-V)host = {}+/-{}'.format(round(EBVhost,3), round(EBVhostErr, 3)))
+    return {'EBVhost': EBVhost, 'EBVhostErr': EBVhostErr, 'Ahost': Ahost}
+
+
 def SPL(t, t0, a, mag0):
     """
     f = [(t-t0)]**alpha
@@ -9,6 +80,7 @@ def SPL(t, t0, a, mag0):
     import numpy as np
     mag = mag0 - 2.5*a*np.log10(t - t0)
     return mag
+
 def SPL2(t, t0, mag0):
     """
     f = [(t-t0)]**alpha
@@ -20,6 +92,7 @@ def SPL2(t, t0, mag0):
     import numpy as np
     mag = mag0 - 2.5*2.0*np.log10(t - t0)
     return mag
+
 def EarlyFit2Pre(incat_name='hgDcSN2019ein.LCfinal.txt', fitcat_name='SN2019ein-PolyFitRes.dat', FreeN=True) :
     """
     Perform preliminary Simple power-law fitting for the case 1 (2nd data < t < 8.3d) to decide the reference t0.

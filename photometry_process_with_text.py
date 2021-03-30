@@ -193,10 +193,10 @@ magtypes=['MAG_AUTO', 'MAG_PSF',
 magtype=magtypes[0]
 refcat='../../ps1-Tonry-NGC3367.cat'
 refcat='../../ps1-Tonry-NGC3938.cat'
-psf=True
-imlist=glob.glob('saCalib*.fits')
 
 # single core
+psf=True
+imlist=glob.glob('saCalib*.fits')
 stime=time.time()
 imlist.sort()
 badlist=[]
@@ -215,6 +215,8 @@ duration=etime-stime
 print('se_1st done', len(imlist), duration/60)
 
 # multiprocess
+psf=True
+imlist=glob.glob('saCalib*.fits')
 import parmap
 imlist.sort()
 stime=time.time()
@@ -235,7 +237,18 @@ for i in badlist:
 	print(i)
 	os.system('mv *'+os.path.splitext(i)[0][2:]+'* bad/')
 
-
+# copy header photometry cards to other files from FHWM_PIX to ULT_OPTA
+'''
+for im in imlist:
+	subim='hdrew_'+im
+	subim=im[2:]
+	h=fits.getheader(im)
+	start,end=h.index('FWHM_PIX'),h.index('UL5_OPTA')
+	#(128, 179)
+	cardnums=list(np.linspace(start, end, end-start + 1))
+	for n in cardnums:
+		puthdr(subim, h.cards[int(n)][0],h.cards[int(n)][1] )
+'''
 # 16sec for 1 image
 
 # return badlist, and zp related values in header, plots(zp, error, ul5, fov)
@@ -296,7 +309,7 @@ size = 10 # arcmin unit, length of square side
 ra,dec=161.645641, 13.750859 #NGC3367
 ra,dec=71.4270833, -59.2471806 # NGC1672
 ra,dec=71.45625, -59.245139 #NGC1672
-ra,dec=178.206042,   44.120722 #NGC3938
+ra,dec=178.195,   44.145722 #NGC3938
 
 positions=(ra,dec)
 stime=time.time()
@@ -329,7 +342,7 @@ imlist=cutlist +imlist
 
 #single core
 badlist=[]
-sz=(10,10)
+sz=(9,9)
 pos=(ra,dec)
 for j,im in enumerate(imlist):
 	print('='*60,'\n')
@@ -380,7 +393,7 @@ imlist.sort()
 print(len(imlist))
 remap2min(imlist, refim='ref.fits')
 stime=time.time()
-cpunum=4
+cpunum=3
 result=parmap.map(wcsremap, imlist, refim='ref.fits',pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
@@ -438,11 +451,12 @@ imlist=
 head='reg_'
 head='rew_'
 head='rem_'
+head='res_'
 # reflist=reflist=['rew_'+s for s in salist]
 # reference image = multi registered reference images
 stime=time.time()
 cpunum=4
-result=parmap.map(hprun, imlist,head='rew_',tl=0 ,tu=65000, pm_pbar=True, pm_processes=cpunum)
+result=parmap.map(hprun, imlist,head=head,tl=0 ,tu=65000, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
 hdlist=glob.glob('hd'+head+'*.fits')
@@ -451,7 +465,7 @@ print('hotpants run done', len(imlist),len(hdlist), duration/60)
 # reference image = 'ref.fits' only
 stime=time.time()
 cpunum=2
-result=parmap.map(hprun_ref, imlist,refim='rem_ref_05min_cut.fits',tl=-10000 ,tu=200000, pm_pbar=True, pm_processes=cpunum)
+result=parmap.map(hprun_ref, imlist,refim='ref.fits',tl=0 ,tu=65000, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
 hdlist=glob.glob('hd*.fits')
@@ -463,6 +477,8 @@ for im in imlist:
 hdlist=glob.glob('hd'+head+'*.fits')
 print('hotpants run done', len(imlist),len(hdlist), duration/60)
 
+
+imlist=glob.glob('reg_saCalib*.fits')
 for im in imlist:
 	print(im)
 	hprun_ref(im,tl=0, tu=65000,ng=False)
@@ -488,7 +504,7 @@ if __name__ == '__main__' :
 # sub image photometry,
 # return mag, magerr or ul5, detection plot
 
-hdlist=glob.glob('hdrew_*Calib*.fits')
+hdlist=glob.glob('hdr*Calib*.fits')
 hdlist.sort()
 print(len(hdlist))
 
@@ -512,7 +528,7 @@ badsesublist=[]
 for n,im in enumerate(hdlist):
 	print('='*60,'\n')
 	try:
-		body,detect=sub_target_phot(im, tra, tdec, sep=5.0)
+		body,detect=sub_target_phot(im, tra, tdec, sep=3.0)
 		print( im, detect,'\n\n',body)
 		f.write(body)
 		trimstamp(im, positions=pos, sizes=sz)

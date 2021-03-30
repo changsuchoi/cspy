@@ -26,12 +26,12 @@ def hotpantsrun(im, regrefim, il=0, iu=65000, tl=0, tu=65000, sigmatch=False):
 	# opt7=' -tg ' + str(tg) +' -tr '+ str(tr)+ ' ' # gain,rdnoise option
 	# in the case of Sigma_image > Sigma_template, for better subtraction, you may try this option
 	# FWHM = 2.355 sigma
-	fwhm_im=fits.getheader(im)['FWHM_PIX']
-	fwhm_reg=fits.getheader(regrefim)['FWHM_PIX']
+	#fwhm_im=fits.getheader(im)['FWHM_PIX']
+	#fwhm_reg=fits.getheader(regrefim)['FWHM_PIX']
 	#com= 'hotpants -v 0 -inim '+regrefim+' -tmplim '+im+\
 	#	' -outim '+outfile+opt0 +' -oci '+convfile +opt1+opt2+opt3+opt4+opt5
 	com= 'hotpants -v 0 -inim '+im+' -tmplim '+regrefim+\
-		' -outim '+outfile + opt0a +' -oci '+ convfile +opt1+opt2+opt3+opt4
+		' -outim '+outfile + opt0a +' -oci '+ convfile +opt1+opt2+opt3#+opt4
 	print(com)
 	os.system(com)
 	#if fwhm_im > fwhm_reg :
@@ -81,7 +81,7 @@ def hprun(im, head=head, il=0, iu=65000, tl=0, tu=65000, ng=True, sigmatch=False
 		return 'Done'
 	except : return None
 
-def hprun_ref(im, refim='ref.fits', il=0, iu=65000, tl=0, tu=65000, ng=False, sigmatch=False):
+def hprun_ref(im, refim='ref.fits', il=0, iu=65000, tl=0, tu=65000, ng=True, sigmatch=False):
 	print('='*60,'\n',im, refim,'\n')
 	outfile='hd'+im
 	convfile='hc'+im

@@ -30,7 +30,7 @@ for i in snucamI60 :
      os.system('rename MAIDANAK MAO_SNUCAM '+i)
      print(i)
 for i in Ilist:
-     os.system('cp '+i+' .')
+     os.system('cp '+i+' MAO_I_fringe/')
 
 # remove bad images from list : Ilist (510 ->359)
 # MAO_I_fringe dircetory
@@ -43,6 +43,7 @@ Ilist=glob.glob('Calib*.fits')
 Ilist.sort()
 
 def mask_bg_norm(im):
+	print(im)
 	data=fits.getdata(im)
 	fn=os.path.splitext(im)[0]
 	bkg_value = bkg.calc_background(data)
@@ -59,10 +60,13 @@ for n,im in enumerate(Ilist):
 
 Ilist=[i.split('/')[-1] for i in Ilist]
 
-cpunum=5
+cpunum=10
 result=parmap.map(mask_bg_norm, Ilist, pm_pbar=True, pm_processes=cpunum)
 
 masklist=glob.glob('Calib*mask.fits')
+
+
+# remove dirty images from list
 
 from pyraf import iraf
 
@@ -74,5 +78,5 @@ def imcombine(group,output):
 
 imcombine(masklist,'MAO_I_master_norm_fringe,fits')
 
-
+os.system('swarp -c /data7/cschoi/code/cschoi/swarp.config/maskcom.swarp *mask.fits')
 

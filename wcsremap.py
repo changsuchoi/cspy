@@ -157,10 +157,10 @@ Usage: remap [-v][-f WCSfile][-a rot][[-b][-j] ra dec][-i bits][-l num] file1.fi
 '''
 # remap input images to reference image
 def remap_in2ref(files,ref='ref.fits'):
-	remapcom='remap -v -f '+ref+' -p '+str(pixscale)+' -o re'+files+' '+files
+	remapcom='remap -v -f '+ref+' -p '+str(pixelscale(ref))+' -o rem_'+files+' '+files
 	os.system(remapcom)
 	inheader=fits.getheader(files)
-	output='re'+files
+	output='rem'+files
 	outdata,outheader=fits.getdata(output, header=True)
 	outheader['DATE-OBS'] = inheader['DATE-OBS']
 	fits.writeto(output, outdata, outheader, clobber=True)
