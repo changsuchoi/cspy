@@ -302,6 +302,12 @@ Pressing’m’ twice in the same location will reset to default range.
 # model colormodel
 
 models = ['max_model', 'EBV_model', 'EBV_model2', 'color_model']
+models= [ 'EBV_model', 'EBV_model2',
+        'max_model', 'max_model2',
+        'Rv_model',
+        'color_model',
+        'SALT_model',
+        'MLCS_model']
 model=models[0]
 s = get_sn('SN2018kp_snpy.txt', sql=None)
 s.choose_model(model, stype='dm15')
@@ -315,6 +321,8 @@ s.restbands['g_s'] = 'g'
 s.restbands['r_s'] = 'r'
 s.restbands['i_s'] = 'i'
 '''
+bands=['Bs','Vs','Rs','Is','g_s','r_s','i_s']
+bands=['Bs','Vs','Rs']
 
 s.filter_order = bands   # Only plot these filters
 s.plot()
@@ -322,25 +330,25 @@ for band in bands:
     s.data[band].curve_fit(method='spline')    # often the defaults are fine
 s.plot()
 
-s.fit( mangle=False, kcorr=True, k_stretch=True)
+s.fit( mangle=False, dokcorr=0, k_stretch=True)
 s.get_max(['Bs','Vs','Rs','Is','g_s','r_s','i_s'])
-bands=['Bs','Vs','Rs']
-s.fit( mangle=True, kcorr=True, k_stretch=True)
-s.fit(band)
+# bands=['Bs','Vs','Rs']
+s.fit( mangle=True, dokcorr=0, k_stretch=True)
+s.fit(bands)
 # LC fit band ['Bs', 'Vs', 'Rs']
 # dm15 DM Tmax, MaxMag
 # plot : spline, LC fit, color, Bolometric
 #
 
 s.choose_model('EBV_model2',stype='dm15')
-s.fit(bands)
+s.fit(bands,mangle=True, dokcorr=0, k_stretch=True)
 DM = s.get_distmod(H0=70.0)
 print("E(B-V) = {}, distance = {}".format(s.EBVhost, DM))
 
 
-t,Lbol,filts,limits = s.bolometric(bands, method='direct', DM=DM,
-                                  EBVhost=s.EBVhost, Rv=3.1,
-                                  interpolate='spline', refband="V", interp_all=False)
+t,Lbol,filts,limits = s.bolometric(['Bs','Vs','Rs'], method='direct', DM=DM,
+                                  EBVhost=s.EBVhost, Rv=1.766 ,
+                                  interpolate='spline', refband="Vs", interp_all=False)
 print(limits)
 
 from matplotlib import pyplot as plt
@@ -358,7 +366,7 @@ For the model, SNooPy will use the Hsiao et al. (2007) SED and
 use the same color-matching mechanics used to compute k-corrections to warp it to fit the observed photometry.
 '''
 t2,Lbol2,filts2,limits2 = s.bolometric(bands, method='SED', DM=DM,
-                                      EBVhost=s.EBVhost, Rv=3.1,
+                                      EBVhost=s.EBVhost, Rv=1.766,
                                       interpolate='spline', refband='Vs', interp_all=False,
                                       lam1=3584.0, lam2=15863.0)
 fig,ax = plt.subplots()
@@ -378,6 +386,7 @@ s.fit( mangle=True, dokcorr=True, k_stretch=True)
 s.summary()
 for param in s.parameters:
     print("{} = {} +/- {}".format(param, s.parameters[param], s.errors[param]))
+
 s.fit( bands, mangle=True, dokcorr=True, k_stretch=True)
 s.summary()
 for param in s.parameters:
@@ -397,7 +406,7 @@ s.plot_color('Bs','Rs')
 s.fitMCMC(bands, R_V="N,2.3,0.9")
 
 #lira
-s.lira('Bs','Vs',dokcorr=1,plot=1,interpolate=1)
+s.lira('Bs','Vs',dokcorr=0,plot=1,interpolate=1)
 '''
 Warning:  can't k-correct spline fits, you're getting observed maxima!
 Vmax occurred at 58160.726562

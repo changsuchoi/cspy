@@ -246,6 +246,15 @@ GE={'g':0.47,'r':0.62,'i':0.75,'B':0.43,'V':0.54,'R':0.64,'I':0.80}
 dat=ascii.read('SN2018kp-i.dat')
 dat.add_column(dat['MAG']-GE['i'],name='MAG_GEC')
 dat.write('GE_'+'SN2018kp-i.dat',format='ascii.commented_header')
+dat=ascii.read('SN2018kp-r.dat')
+dat.add_column(dat['MAG']-GE['r'],name='MAG_GEC')
+dat.write('GE_'+'SN2018kp-r.dat',format='ascii.commented_header')
+fils=['B','V','R','I','g','r','i']
+for filname in fils:
+    dat=ascii.read('SN2018kp-'+filname+'.dat')
+    dat.add_column(dat['MAG']-GE[filname],name='MAG_GEC')
+    dat.write('GE_'+'SN2018kp-'+filname+'.dat',format='ascii.commented_header',overwrite=True)
+
 
 
 
