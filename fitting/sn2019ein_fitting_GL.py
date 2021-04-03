@@ -12,8 +12,8 @@ def single_powerlaw(t, t0, a, mg0):
 def fit_single(t, mg, mge, initial, maxfev):
     """
     t       : time relative to specific date.
-    mg      : magnitude 
-    mge     : magnitude error 
+    mg      : magnitude
+    mge     : magnitude error
     initial : list of initial values of t0, a, mg0, enter like [1.5, 2., 16.5]
     """
     from scipy.optimize import curve_fit
@@ -32,18 +32,21 @@ def planck(wave, temp):
     c1 = np.float128(3.7417749e-5)          # =2*!DPI*h*c*c
     c2 = np.float128(1.4387687)             # =h*c/k
     val = c2/w/np.float128(temp)
-    bbflux = c1/( (w**5)*(np.exp(val)-1.)) 
+    bbflux = c1/( (w**5)*(np.exp(val)-1.))
     return bbflux*1.e-8 # convert to ergs cm-2 s-1 A-1
 
 def fearly2_rw10(td, rstar, band) :
     """
-    This function produces the shock-heated emssion light curve. Written for the SN 2015F work based on the Rabinak & Waxman (2011) model [2015. M. Im]. Currently, the explosion energy is set to 10^51 erg which is appropriate for Type Ia SN.
+    This function produces the shock-heated emssion light curve.
+    Written for the SN 2015F work based on the Rabinak & Waxman (2011) model [2015. M. Im].
+    Currently, the explosion energy is set to 10^51 erg which is appropriate for Type Ia SN.
     This value may need to be changed for other types of SNe.
     Also, at the end of the program, you will encounter the line
     fearly2_kasen=interpol(mbbflux,xw,6580.)
     Note that the number "6580." is the effective wavelength of the filter in Angstrom.
-    In this case, it is set to R-band. Please change the number if you want to plot the light curve in different bands. [2018-05-03, added by M. Im]
-    Slightly modified at 2018-05-03 to add comments. [2018-05-03, M. Im].   
+    In this case, it is set to R-band.
+    Please change the number if you want to plot the light curve in different bands. [2018-05-03, added by M. Im]
+    Slightly modified at 2018-05-03 to add comments. [2018-05-03, M. Im].
     """
     import numpy as np
     rstar = np.float128(rstar)
@@ -86,15 +89,15 @@ def fearly2_rw10(td, rstar, band) :
     xw   = 1000. + 80.*np.arange(100)
     xw = np.array(xw, dtype='float128')
 
-    from lgpy.sn2019ein_fitting import planck
+    #from lgpy.sn2019ein_fitting import planck
     bbflux = planck(xw, teff)
     ff   = -2.5 * (2.*np.log10(xw) -10. -np.log10(c) ) # Angstrom to Hertz conversion factor
-    mbbflux = -2.5*np.log10(bbflux) + ff + abzero -2.5*fluxm # convert flux to AB magnitude (Find ref in wiki). 
+    mbbflux = -2.5*np.log10(bbflux) + ff + abzero -2.5*fluxm # convert flux to AB magnitude (Find ref in wiki).
     x_data  = xw
     y_data  = mbbflux
     from scipy.interpolate import UnivariateSpline
     spl     = UnivariateSpline(x_data, y_data, s=0.2, k=5)
-    # From 1000A to 8920A, we fit BB spectrum to obtain AB magnitude in specific band from continuous value. ex) What is magnitude in 6580A? 6580 is not generated in the array wx so we fit mbbflux!  
+    # From 1000A to 8920A, we fit BB spectrum to obtain AB magnitude in specific band from continuous value. ex) What is magnitude in 6580A? 6580 is not generated in the array wx so we fit mbbflux!
     # The last input parameter in the above function (e.g., 4770., and 6580.) are the effective wavelength of the filter in Angstrom. Please modify the value, depending on which filter you use.
     # 4770  : B band, 6580. : R band
     x_array = np.linspace(np.min(x_data), np.max(x_data), num= int((np.max(x_data) -np.min(x_data))/80.))
@@ -105,7 +108,7 @@ def fearly2_rw10(td, rstar, band) :
         #fearly2 = np.float128(spl(4770)) # LSGT
         fearly2 = np.float128(spl(4353.)) # https://www.aip.de/en/research/facilities/stella/instruments/data/johnson-ubvri-filter-curves
     elif band == 'V' :
-        fearly2 = np.float128(spl(5477.)) 
+        fearly2 = np.float128(spl(5477.))
     elif band == 'R' :
         #print('Band : '+band+', eff w = 6580.')
         #fearly2 = np.float128(spl(6580)) # LSGT
@@ -121,14 +124,14 @@ def fearly2_rw10(td, rstar, band) :
 
 def fearly2_kasen(td, rstar, band):
     """
-    This function produces the shock-heated emssion light curve. Written for the SN 2015F work based on the Kasen (2010) model [2015. M. Im]. 
+    This function produces the shock-heated emssion light curve. Written for the SN 2015F work based on the Kasen (2010) model [2015. M. Im].
     Currently, the explosion energy is set to 10^51 erg which is appropriate for Type Ia SN.
     This value may need to be changed for other types of SNe.
     Also, at the end of the program, you will encounter the line
     fearly2_kasen=interpol(mbbflux,xw,6580.)
     Note that the number "6580." is the effective wavelength of the filter in Angstrom.
     In this case, it is set to R-band. Please change the number if you want to plot the light curve in different bands. [2018-05-03, added by M. Im]
-    Slightly modified at 2018-05-03 to add comments. [2018-05-03, M. Im].   
+    Slightly modified at 2018-05-03 to add comments. [2018-05-03, M. Im].
 
     * Size and Mass relation (Kasen 2010)
     1 - 3 Msun, MS          : R* = 1 - 3 x 10**11cm
@@ -137,7 +140,7 @@ def fearly2_kasen(td, rstar, band):
     """
     import numpy as np
     # rstar = 1.0
-    # td = 0.5 
+    # td = 0.5
     # band = 'R'
     rstar = np.float128(rstar)
     td = np.float64(td)
@@ -175,15 +178,15 @@ def fearly2_kasen(td, rstar, band):
     #xw   = 1000. + 80.*np.arange(100)
     xw = np.array(xw, dtype='float128')
 
-    from lgpy.sn2019ein_fitting import planck
+    #from lgpy.sn2019ein_fitting import planck
     bbflux = planck(xw, teff)
     ff   = -2.5 * (2.*np.log10(xw) -10. -np.log10(c) ) # Angstrom to Hertz conversion factor
-    mbbflux = -2.5*np.log10(bbflux) + ff + abzero -2.5*fluxm # convert flux to AB magnitude (Find ref in wiki). 
+    mbbflux = -2.5*np.log10(bbflux) + ff + abzero -2.5*fluxm # convert flux to AB magnitude (Find ref in wiki).
     x_data  = xw
     y_data  = mbbflux
     from scipy.interpolate import UnivariateSpline
     spl     = UnivariateSpline(x_data, y_data, s=0.2, k=5)
-    # From 1000A to 8920A, we fit BB spectrum to obtain AB magnitude in specific band from continuous value. ex) What is magnitude in 6580A? 6580 is not generated in the array wx so we fit mbbflux!  
+    # From 1000A to 8920A, we fit BB spectrum to obtain AB magnitude in specific band from continuous value. ex) What is magnitude in 6580A? 6580 is not generated in the array wx so we fit mbbflux!
     # The last input parameter in the above function (e.g., 4770., and 6580.) are the effective wavelength of the filter in Angstrom. Please modify the value, depending on which filter you use.
     # 4770  : B band
     # 5477 : V band https://www.aip.de/en/research/facilities/stella/instruments/data/johnson-ubvri-filter-curves
@@ -196,7 +199,7 @@ def fearly2_kasen(td, rstar, band):
         #fearly2 = np.float128(spl(4770)) # LSGT
         fearly2 = np.float128(spl(4353.)) # https://www.aip.de/en/research/facilities/stella/instruments/data/johnson-ubvri-filter-curves
     elif band == 'V' :
-        fearly2 = np.float128(spl(5477.)) 
+        fearly2 = np.float128(spl(5477.))
     elif band == 'R' :
         #print('Band : '+band+', eff w = 6580.')
         #fearly2 = np.float128(spl(6580)) # LSGT
@@ -216,14 +219,14 @@ def fearly2_kasen(td, rstar, band):
 
 def fearly3_kasen(td, rstar, band):
     """
-    This function produces the shock-heated emssion light curve. Written for the SN 2015F work based on the Kasen (2010) model [2015. M. Im]. 
+    This function produces the shock-heated emssion light curve. Written for the SN 2015F work based on the Kasen (2010) model [2015. M. Im].
     Currently, the explosion energy is set to 10^51 erg which is appropriate for Type Ia SN.
     This value may need to be changed for other types of SNe.
     Also, at the end of the program, you will encounter the line
     fearly3_kasen=interpol(mbbflux,xw,6580.)
     Note that the number "6580." is the effective wavelength of the filter in Angstrom.
     In this case, it is set to R-band. Please change the number if you want to plot the light curve in different bands. [2018-05-03, added by M. Im]
-    Slightly modified at 2018-05-03 to add comments. [2018-05-03, M. Im].   
+    Slightly modified at 2018-05-03 to add comments. [2018-05-03, M. Im].
 
     fearly3_kasen provides the size of the companion when you enter magnitude. [2020-08-24, added by G. Lim]
 
@@ -234,7 +237,7 @@ def fearly3_kasen(td, rstar, band):
     """
     import numpy as np
     # rstar = 1.0
-    # td = 0.5 
+    # td = 0.5
     # band = 'R'
     rstar = np.float128(rstar)
     td    = np.float64(td)
@@ -271,22 +274,22 @@ def fearly3_kasen(td, rstar, band):
     flux_Ni = 1326.32
 
     ### Into AB mag to Flux
-    #mbbflux = -2.5*np.log10(bbflux) + ff + abzero -2.5*fluxm 
+    #mbbflux = -2.5*np.log10(bbflux) + ff + abzero -2.5*fluxm
     mag_obs   = 18.913
     mag_Ni    = 19.193
     abzero       = np.float128(-48.600) # in erg*s**-1*cm**-2*Hz**-1
     flux_Ni_Jy   = 10.**(23-(mag_Ni+48.6)/2.5  ) # AB to Jansky
     flux_Ni_Hz   = flux_Ni_Jy*1.e-23 # Jansky to erg s-1 Hz-1 cm-2
-    HzToAng      = (c/( (wav*1e-10)**2)) # 
+    HzToAng      = (c/( (wav*1e-10)**2)) #
     flux_Ni_wav  = flux_Ni_Hz * HzToAng
     logflux_Ni   = np.log10(flux_Ni)
     ### Temp. of Observed flux (Early emission)
     logTeff  = (np.log10(flux_Ni_wav) - np.log10(sigb))/4.
     0.25*np.log10(2.*r13) = logTeff -np.log10(2.5) - 4. +(35./36.)*np.log10(ke) + (37./72.)*np.log10(td)
-    ### 
-    log2r13 =  logLt - 43 -0.25*np.log10(Mc) -(7./4.)*np.log10(v9)+ 0.75*np.log10(ke) + (0.5)*np.log10(td) 
+    ###
+    log2r13 =  logLt - 43 -0.25*np.log10(Mc) -(7./4.)*np.log10(v9)+ 0.75*np.log10(ke) + (0.5)*np.log10(td)
     '''
-    # ---- 
+    # ----
     logTeff = np.log10(2.5) + 4. + 0.25*np.log10(2.*r13) - (35./36.)*np.log10(ke) - (37./72.)*np.log10(td) # Effective temperature of the early emission
 
     logFbb  = np.log10(sigb) + 4.*logTeff # Blackbody flux of early emission (Ni decay part), bolometric
@@ -298,7 +301,7 @@ def fearly3_kasen(td, rstar, band):
     #xw   = 1000. + 40.*np.arange(200)
     #xw   = np.array(xw, dtype='float128')
 
-    from lgpy.sn2019ein_fitting import planck
+    #from lgpy.sn2019ein_fitting import planck
     #bbflux  = planck(xw, teff)
     if  band == 'B' :
         xw = 4353.
@@ -312,14 +315,14 @@ def fearly3_kasen(td, rstar, band):
     elif band == 'I' :
         xw = 8797.
         bbflux = planck(xw, teff)
-    elif band == 'g' :   
+    elif band == 'g' :
         xw = 4770.
         bbflux = planck(xw, teff)
     elif band == 'r' :
         xw = 6231.
         bbflux = planck(xw, teff)
     ff      = -2.5 * (2.*np.log10(xw) -10. -np.log10(c) ) # Angstrom to Hertz conversion factor
-    mbbflux = -2.5*np.log10(bbflux) + ff + abzero -2.5*fluxm # convert flux to AB magnitude (Find ref in wiki), Bolometric. 
+    mbbflux = -2.5*np.log10(bbflux) + ff + abzero -2.5*fluxm # convert flux to AB magnitude (Find ref in wiki), Bolometric.
     return mbbflux
 
 '''
@@ -345,11 +348,11 @@ def MAG_Kasen(td, rstar, band):
 def lcearly(rstar, band, fig=True):
     """
     Draw theoritical model of early light curve caused by Shock-heated emission.
-    rstar : 0.1, 1 
+    rstar : 0.1, 1
     band  : 'B', 'R'
 
-    # Marion+16 
-    RG    = 2*1e13cm 
+    # Marion+16
+    RG    = 2*1e13cm
     6M MS = 2*1e12cm
     2M MS = 5*1e11cm
 
@@ -360,7 +363,7 @@ def lcearly(rstar, band, fig=True):
     """
     import numpy as np
     import matplotlib.pyplot as plt
-    from lgpy.sn2019ein_fitting import fearly2_kasen
+    #from lgpy.sn2019ein_fitting import fearly2_kasen
 
     #rstar = [0.1, 0.6, 1.0, round((5.*1.e+11*u.cm).to(u.R_sun).value,3),round((2.*1.e+12*u.cm).to(u.R_sun).value,3), round((2.*1.e+13*u.cm).to(u.R_sun).value,3)]
     #rstar = [0.1, 0.6, 1.0, round((5.*1.e+11*u.cm).to(u.R_sun).value,3),round((2.*1.e+12*u.cm).to(u.R_sun).value,3), round((2.*1.e+13*u.cm).to(u.R_sun).value,3)]

@@ -40,8 +40,9 @@ def CalChiSq(fit, x, y, yerr, N, n_free) :
         RedCSQ = -99
     return RedCSQ
 
-def GetEBVhost(fitcat_name = 'SN2019ein-PolyFitRes.dat') :
+def GetEBVhost(fitcat_name) :
     """
+    fitcat_name = 'SN2019ein-PolyFitRes.dat'
     Bring the result of polynomial fitting.
     ==== Host galaxy extinction (Philips+99) ==='
     E(B-V)host = (Bmax - Vmax)c - (Bmax - Vmax)0
@@ -50,7 +51,7 @@ def GetEBVhost(fitcat_name = 'SN2019ein-PolyFitRes.dat') :
     BVRIJHK = 01234567
     """
     import extinction
-    fitcat  = ascii.read('SN2019ein-PolyFitRes.dat')
+    fitcat  = ascii.read(fitcat_name)
     MAGmax  = fitcat['MAGmax']; MAGmaxErr = fitcat['MmaxErr']
     Bmax    = MAGmax[0]       ; Vmax      = MAGmax[1]
     BmaxErr = MAGmaxErr[0]    ; VmaxErr   = MAGmaxErr[1]
