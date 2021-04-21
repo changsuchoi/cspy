@@ -280,15 +280,15 @@ the following keys can be used:
 •’a’ and ’A’: decrease and increase the amplitude by 10%, respectively.
 •’d’ and ’D’: decrease and increase the degree of differentiability by 1
 When fitting with Dierckx splines, the following keys can be used:
-•’a’: Add a knot point at the cursor position.  Note: this will change thetaskparameterto -1.
+•’a’: Add a knot point at the cursor position.  Note: this will change the task parameter to -1.
 •’d’:  Delete knot point closest to the cursor position.
 Note:  this will change thetaskparameter to -1.
-•’m’:  Move  the  knot  point  closest  to  the  cursor  position  to  a  new  position  (hit  ’m’again).
-Note:  this will change thetaskparameter to -1.
+•’m’:  Move  the  knot  point  closest  to  the  cursor  position  to  a  new  position  (hit  ’m’ again).
+Note:  this will change the task parameter to -1.
 When fitting with polynomials, the following keys can be used:
 •’n’ and ’N’: decrease and increase the order of the polynomial by 1
 •’m’:  specify range over which to fit (press ’m’ at beginning and again at end).
-Pressing’m’ twice in the same location will reset to default range.
+Pressing ’m’ twice in the same location will reset to default range.
 '''
 
 

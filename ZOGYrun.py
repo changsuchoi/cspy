@@ -1,3 +1,6 @@
+
+
+'''
 Suggested steps to get started:
 
 (1) download one of the install scripts, e.g. for mac OS:
@@ -37,3 +40,4 @@ python [some path]/ZOGY/zogy.py --new_fits new.fits --ref_fits ref.fits --set_fi
   updated if your masks contain different values for the mask pixel type; the keys cannot be changed):
 
 python [some path]/ZOGY/zogy.py --new_fits new.fits --new_fits_mask new_mask.fits --ref_fits ref.fits --ref_fits_mask ref_mask.fits --set_file mycopy [--telescope my_tel]
+'''

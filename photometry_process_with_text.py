@@ -9,6 +9,7 @@
 
 
 ''' 1. calibfitslist.py '''
+import glob
 caliblist=glob.glob("Calib*.fits")
 oklist, nolist=calibfitslist(caliblist)
 oklist.sort()
@@ -19,17 +20,24 @@ print ('oklist', len(oklist),'nolist', len(nolist))
 '''  1.a FOV check '''
 # fov-check.py field separation > 10 arcmin
 # move them to bad/ directory
-ra,dec=71.4270833, -59.2471806 # NGC1672
+ra,dec=71.4270833, -59.2471806
 
-ra,dec=178.206042,   44.120722 # NGC3938
 for im in caliblist : imcenter_offset(im,ra=ra,dec=dec,seplimit=10)
 '''  1.b header check '''
 # DATE-OBS, EXPTIME, FILTER
 # header-fix.py
-!gethead Calib*.fits DATE-OBS EXPTIME
+''' 2.a. remove PVx_x keyword for saCalib*.fits '''
+# header-fix.py delhdrkey()
+kwds=['PV1_0', 'PV1_1', 'PV1_2', 'PV1_3', 'PV1_4', 'PV1_5',
+		'PV1_6', 'PV1_7', 'PV1_8', 'PV1_9', 'PV1_10',
+		'PV2_0', 'PV2_1', 'PV2_2', 'PV2_3', 'PV2_4', 'PV2_5',
+		'PV2_6', 'PV2_7', 'PV2_8', 'PV2_9', 'PV2_10']
+for im in salist:
+	delhdrkey(im,kwds=kwds)
 
-''' 2. imagesetgroup.py '''
+''' 3. imagesetgroup.py '''
 # return clines, salines
+caliblist=glob.glob("Calib*.fits")
 caliblist.sort()
 #oklist.sort()
 #caliblist==oklist
@@ -38,13 +46,15 @@ len(lines)
 #salines=epoch_group(salist)
 #len(salines)
 
-''' 3. alipy-python3-epoch.py '''
+''' 4. alipy-python3-epoch.py '''
 # gregister for each epoch
 # single image check
+os.system('rm *.geodatabase')
 for ii in lines:
     iii=ii[:-1].split(',')
     if len(iii)==1:
         print (iii)
+
 
 import time
 starttime=time.time()
@@ -55,7 +65,7 @@ glist=glob.glob('Calib*gregister.fits')
 glist.sort()
 print('alipy work done', duration, len(glist))
 
-''' 4. imagecombine.py '''
+''' 5. imagecombine.py '''
 # image combine for each epoch with Calib*gregister.fits files
 # return Calib*-180_com.fits
 glist=glob.glob('Calib*gregister.fits')
@@ -67,18 +77,13 @@ calcomlist=glob.glob('Calib*com.fits')
 print('imagecombine done')
 print(len(glines), len(calcomlist))
 
-''' 5. scamp-astrometry.net-result.py '''
+
+''' 2. scamp-astrometry.net-result.py '''
 # multiprocessing cpu=4 projection='TPV'
 # return saCalib*.fits, salist
 # with cpu=4, 3 sec for 1 image process
 # after scamp, remove PVX_X keywords in header,
 # cut image less than the size of ref.fits
-import time
-import parmap
-imlist=glob.glob('Calib*.fits')
-imlist.sort()
-print(len(imlist))
-
 for j,im in enumerate(imlist) :
 	contnum=scamp_net(im, astref=False, projection='TAN',DETECT_THRESH='3')
 	headmerge(im)
@@ -88,6 +93,11 @@ for j,im in enumerate(imlist) :
 	print('='*60,'\n')
 
 # multi core with parmap
+imlist=glob.glob('Calib*com.fits')
+imlist.sort()
+print(len(imlist))
+import time
+import parmap
 stime=time.time()
 cpunum=5
 result=parmap.map(scamp_astrometry_net, imlist, pm_pbar=True, pm_processes=cpunum)
@@ -101,21 +111,9 @@ print('scamp_astrometry.net done', len(imlist), duration/60)
 
 salist=glob.glob('saCalib*.fits')
 salist.sort()
-print(len(oklist),len(salist))
+print(len(imlist),len(salist))
 
-imlist=glob.glob('saCalib*.fits')
-for im in imlist:
-	print(im)
-	delhdrkey(im)
 
-''' 5.a. remove PVx_x keyword for saCalib*.fits '''
-# header-fix.py delhdrkey()
-kwds=['PV1_0', 'PV1_1', 'PV1_2', 'PV1_3', 'PV1_4', 'PV1_5',
-		'PV1_6', 'PV1_7', 'PV1_8', 'PV1_9', 'PV1_10','PV1_11'
-		'PV2_0', 'PV2_1', 'PV2_2', 'PV2_3', 'PV2_4', 'PV2_5',
-		'PV2_6', 'PV2_7', 'PV2_8', 'PV2_9', 'PV2_10','PV2_11']
-for im in salist:
-	delhdrkey(im,kwds=kwds)
 
 ''' 6. swarprun.py '''
 # image combine for each opoch which saCalib*fits files
@@ -155,7 +153,7 @@ imlist=glob.glob('saCalib*.fits')
 imlist.sort()
 print(len(imlist))
 stime=time.time()
-cpunum=3
+cpunum=5
 result=parmap.map(psfexrun, imlist, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
@@ -174,29 +172,22 @@ DEBLEND_MINCONT = str(0.005)
 lowmag=13
 highmag=19
 filname,filerr='R','Rerr'
-filname,filerr='r','rerr'
-filname,filerr='r_psf','e_r_psf'
+#filname,filerr='r','rerr'
 filname,filerr='B','Berr'
 filname,filerr='V','Verr'
 filname,filerr='I','Ierr'
 filname,filerr='g','gerr'
-filname,filerr='u_psf','e_u_psf'
-filname,filerr='g_psf','e_g_psf'
 filname,filerr='i','ierr'
-filname,filerr='i_psf','e_i_psf'
-filname,filerr='z_psf','e_z_psf'
-
 magtypes=['MAG_AUTO', 'MAG_PSF',
 		'MAG_APER','MAG_APER_1','MAG_APER_2',
 		'MAG_APER_3','MAG_APER_4','MAG_APER_5','MAG_APER_6','MAG_APER_7',
 		'MAG_APER_8']
 magtype=magtypes[0]
 refcat='../../ps1-Tonry-NGC3367.cat'
-refcat='../../ps1-Tonry-NGC3938.cat'
-
-# single core
 psf=True
 imlist=glob.glob('saCalib*.fits')
+
+# single core
 stime=time.time()
 imlist.sort()
 badlist=[]
@@ -215,8 +206,6 @@ duration=etime-stime
 print('se_1st done', len(imlist), duration/60)
 
 # multiprocess
-psf=True
-imlist=glob.glob('saCalib*.fits')
 import parmap
 imlist.sort()
 stime=time.time()
@@ -235,20 +224,9 @@ print (badlist)
 
 for i in badlist:
 	print(i)
-	os.system('mv *'+os.path.splitext(i)[0][2:]+'* bad/')
+	os.system('mv '+os.path.splitext(i)[0]+'* bad/')
 
-# copy header photometry cards to other files from FHWM_PIX to ULT_OPTA
-'''
-for im in imlist:
-	subim='hdrew_'+im
-	subim=im[2:]
-	h=fits.getheader(im)
-	start,end=h.index('FWHM_PIX'),h.index('UL5_OPTA')
-	#(128, 179)
-	cardnums=list(np.linspace(start, end, end-start + 1))
-	for n in cardnums:
-		puthdr(subim, h.cards[int(n)][0],h.cards[int(n)][1] )
-'''
+
 # 16sec for 1 image
 
 # return badlist, and zp related values in header, plots(zp, error, ul5, fov)
@@ -276,8 +254,6 @@ for j,im in enumerate(imlist):
 		try: se2nd(im)
 		except:badlist.append(im)
 	#se2nd(im)
-print (badlist)
-print('se2nd finished')
 
 # multi core
 import parmap
@@ -306,12 +282,8 @@ os.system('rm *ap.fits *seg.fits')
 #	imcopy(im,position=(ra,dec))
 os.system('rm *Calib*cut.fits')
 size = 10 # arcmin unit, length of square side
-ra,dec=161.645641, 13.750859 #NGC3367
-ra,dec=71.4270833, -59.2471806 # NGC1672
-ra,dec=71.45625, -59.245139 #NGC1672
-ra,dec=178.195,   44.145722 #NGC3938
-
-positions=(ra,dec)
+ra,dec=161.645641, 13.750859
+positions=(161.645641, 13.750859)
 stime=time.time()
 cpunum=3
 result=parmap.map(imcopy, imlist, pm_pbar=True, pm_processes=cpunum)
@@ -326,8 +298,7 @@ Error in write: Select error for <Subprocess '/data7/cschoi/util/iraf-2.16.1-201
 '''
 # trim
 sz=(20,20)
-sz=(10,10)
-pos=(ra,dec) # NGC3367
+pos=(161.645641, 13.750859) # NGC3367
 #salist=glob.glob('saCalib*.fits')
 #salist.sort()
 stime=time.time()
@@ -338,28 +309,7 @@ duration=etime-stime
 cutlist=glob.glob('saCalib*cut.fits')
 print('trim image cut done', len(imlist),len(cutlist), duration/60)
 #trim(im, positions=(False,False), sizes=(10,10))
-imlist=cutlist +imlist
-
-#single core
-badlist=[]
-sz=(9,9)
-pos=(ra,dec)
-for j,im in enumerate(imlist):
-	print('='*60,'\n')
-	print(j+1,'of',len(imlist))
-	#if os.path.isfile(os.path.splitext(im)[0]+'.dat'):pass
-	#else:
-	try: trim(im, positions=pos, sizes=sz)
-	except:badlist.append(im)
-	#se2nd(im)
-print (badlist)
-
-''' 11. registration, align '''
-scamp astrometry first ('ref.fits')
-os.system('mv ref.fits ref.fits.old')
-os.system('mv saref.fits ref.fits')
-
-
+imlist=cutlist
 ''' 11.1 alipy-ref2in '''
 # registration ref.fits to iuput image, single 2.5sec
 # return reg_Calib*.fits
@@ -394,7 +344,7 @@ print(len(imlist))
 remap2min(imlist, refim='ref.fits')
 stime=time.time()
 cpunum=3
-result=parmap.map(wcsremap, imlist, refim='ref.fits',pm_pbar=True, pm_processes=cpunum)
+result=parmap.map(wcsremap, imlist, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
 rewlist=glob.glob('rew_*Calib*.fits')
@@ -451,12 +401,11 @@ imlist=
 head='reg_'
 head='rew_'
 head='rem_'
-head='res_'
 # reflist=reflist=['rew_'+s for s in salist]
 # reference image = multi registered reference images
 stime=time.time()
-cpunum=4
-result=parmap.map(hprun, imlist,head=head,tl=0 ,tu=65000, pm_pbar=True, pm_processes=cpunum)
+cpunum=2
+result=parmap.map(hprun, imlist,head='rew_',tl=0 ,tu=65000, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
 hdlist=glob.glob('hd'+head+'*.fits')
@@ -465,7 +414,7 @@ print('hotpants run done', len(imlist),len(hdlist), duration/60)
 # reference image = 'ref.fits' only
 stime=time.time()
 cpunum=2
-result=parmap.map(hprun_ref, imlist,refim='ref.fits',tl=0 ,tu=65000, pm_pbar=True, pm_processes=cpunum)
+result=parmap.map(hprun_ref, imlist,refim='rem_ref_05min_cut.fits',tl=-10000 ,tu=200000, pm_pbar=True, pm_processes=cpunum)
 etime=time.time()
 duration=etime-stime
 hdlist=glob.glob('hd*.fits')
@@ -475,16 +424,8 @@ for im in imlist:
 	print(im)
 	hprun(im,head=head,tl=0, tu=65000,ng=False)
 hdlist=glob.glob('hd'+head+'*.fits')
+
 print('hotpants run done', len(imlist),len(hdlist), duration/60)
-
-
-imlist=glob.glob('reg_saCalib*.fits')
-for im in imlist:
-	print(im)
-	hprun_ref(im,tl=0, tu=65000,ng=False)
-hdlist=glob.glob('hd'+head+'*.fits')
-print('hotpants run done', len(imlist),len(hdlist), duration/60)
-
 '''
 cpunum=2
 if __name__ == '__main__' :
@@ -504,16 +445,12 @@ if __name__ == '__main__' :
 # sub image photometry,
 # return mag, magerr or ul5, detection plot
 
-hdlist=glob.glob('hdr*Calib*.fits')
+hdlist=glob.glob('hdrew_*Calib*.fits')
 hdlist.sort()
 print(len(hdlist))
 
 targetname='SN2018kp'
 tra,tdec=161.637792, 13.741869
-targetname='SN2017gax'
-tra,tdec=71.45625, -59.245139
-targetname='SN2017ein'
-tra,tdec=178.221875, 44.123919
 pos=(tra,tdec)
 sizes=(5,5)
 sz=sizes
@@ -528,7 +465,7 @@ badsesublist=[]
 for n,im in enumerate(hdlist):
 	print('='*60,'\n')
 	try:
-		body,detect=sub_target_phot(im, tra, tdec, sep=3.0)
+		body,detect=sub_target_phot(im, tra, tdec, sep=5.0)
 		print( im, detect,'\n\n',body)
 		f.write(body)
 		trimstamp(im, positions=pos, sizes=sz)

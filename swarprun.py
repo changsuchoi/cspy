@@ -53,13 +53,13 @@ def exposuresum(ims,expkey='EXPTIME'):
 	expsum=np.sum(exps)
 	return str(int(expsum))
 
-def swarpcom(imlist):
+def swarpcom(imlist,sub_back='N'):
 	newdt, newname=centertimeheader(imlist)
 	param_dict={
 	'IMAGEOUT_NAME'     : newname,
 	'COMBINE'           : 'Y',
 	'COMBINE_TYPE'      : 'MEDIAN',
-	'SUBTRACT_BACK'     : 'N',
+	'SUBTRACT_BACK'     : sub_back,
 	'WRITE_FILEINFO'    : 'Y',
 	'BACK_TYPE'         : 'AUTO',
 	'BACK_DEFAULT'      : '0.0',
@@ -132,6 +132,21 @@ def swarp_list(ii):
 			swarpcom(ii)
 			puthdr(centertimeheader(ii)[1],'DATE-OBS', centertimeheader(ii)[0])
 
+
+def swarp_flux_scale(imlist):
+	zplist=[fits.getheader(s)['ZP_F15'] for s in imlist ]
+	minzp=np.min(zplist)
+	maxzp=np.max(zplist)
+	print(len(imlist),'files')
+	print('Min',minzp,'Max',maxzp)
+	scalef=10.**(0.4*(zplist-minzp))
+	print(scalef)
+	# scaelf=10.**(0.4*(zplist-maxzp))
+	for i,n in enumerate(imlist):
+		puthdr(n,'FLXSCALE',scalef[i])
+	swarpcom(imlist)
+	for i,n in enumerate(imlist):
+		puthdr(n,'FLXSCALE',1.0)
 
 # swarpregister in development
 '''
