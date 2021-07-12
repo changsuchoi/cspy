@@ -1,4 +1,6 @@
+from lzma import FILTER_IA64
 import astropy.io.ascii as ascii
+from astropy.utils.data import download_file
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.time import Time
@@ -6,10 +8,12 @@ from astropy.table import Table, vstack
 import glob
 import os,sys
 
-datdirectory='/data7/cschoi/sngal/NGC3367/phot/'
+datdirectory='/data7/cschoi/sngal/NGC3938/phot/'
 datfiles=['SN2018kp-DOAO-R.dat']
 tbl=ascii.read(datdirectory+datfiles[0])
 t = Time('2018-01-24T21:57:12', format='isot', scale='utc')
+t = Time('2017-08-14T17:05:16', format='isot', scale='utc') #NGC1672
+t = Time('2017-05-25T23:16:48', format='isot', scale='utc') #NGC3938
 discoverymjd=t.mjd
 # tbl.colnames
 colnames= ['FILE', 'MJD', 'OBSERVATORY', 'FILTER', 'NUMBER',
@@ -97,11 +101,28 @@ ddd=[ 'SN2018kp-SOAO-B.dat',
  'SN2018kp-LSGT-i.dat',
 ]
 
+ddd=[ 
+'SN2017ein-LOAO-B.dat',
+'SN2017ein-DOAO-B.dat',
+'SN2017ein-FLI-B.dat',
+
+'SN2017ein-FLI-R.dat',
+'SN2017ein-LOAO-R.dat',
+'SN2017ein-DOAO-R.dat',
+
+'SN2017ein-DOAO-V.dat',
+'SN2017ein-FLI-V.dat',
+'SN2017ein-CCA250-V.dat',
+
+'SN2017ein-FLI-I.dat']
+
+ddd=['SN2017gax-LSGT-g.dat','SN2017gax-LSGT-r.dat','SN2017gax-LSGT-i.dat','SN2017gax-LSGT-z.dat']
+
 # read cut data file make clean data file, then save to phot/cut/*.dat
 # cut_SN2018kp-LOAO-R.dat
 ds=glob.glob('cut*.dat')
 
-d='cut_SN2018kp-MAO_FLI-B.dat'
+d='cut_SN2017ein-DOAO-V.dat'
 magtype='MAG_APER_4'
 magerrtype=magerrtype=magtype[:3]+'ERR'+magtype[3:]
 zptype='ZP_F15'
@@ -120,29 +141,31 @@ def dat_conversion(d,magtype='MAG_APER_4',zptype='ZP_F15',zperrtype='ZPE_F15',ul
     t.add_column(dd['OBSERVATORY'],name='OBS')
     t.add_column(dd['FILTER'],name='FILTER')
     t.add_column(dd['detect'],name='DET')
-    t.add_column(dd['FILE'],name='FILE')
-    t.write('cut/'+d[4:],format='ascii.commented_header',overwrite=True)
+    #t.add_column(dd['FILE'],name='FILE')
+    t.write('SN2017ein-FLI-B.dat',format='ascii.commented_header',overwrite=True)
 # fil=['R']*175
 # t.add_column(fil,name='FILTER')
 
 # each filter
 t=Table()
 for c in ddd:
-    cc=ascii.read(c)
-    if '-B.dat' in c:
+    
+    if '-V.dat' in c:
+        cc=ascii.read(c)
         t=vstack([t,cc])
 t.sort('MJD','OBS')
-t.write('SN2018kp-B.dat',format='ascii.commented_header',overwrite=True)
+t.write('SN2017ein-V.dat',format='ascii.commented_header',overwrite=True)
+
 # all to one dat file
 t=Table()
 for c in ddd:
     cc=ascii.read(c)
     t=vstack([t,cc])
 t.sort(['MJD','OBS'])
-t.write('SN2018kp-all_in_one.dat',format='ascii.commented_header',overwrite=True)
+t.write('SN2017ein-BVR.dat',format='ascii.commented_header',overwrite=True)
 
-dpath='/data7/cschoi/sngal/NGC3367/phot/cut/'
-ddd=glob.glob(dpath+'SN2018kp*dat')
+dpath='/data7/cschoi/sngal/NGC3938/phot/cut/'
+ddd=glob.glob(dpath+'SN2017ein*dat')
 dd=ddd[0]
 
 # marker
@@ -152,18 +175,18 @@ mk={'LOAO':'o' , 'DOAO':'^',
     'LSGT':'*' , 'SOAO':'X' }
     # color
 co={'B':'blue','V':'green','R':'orange','I':'red',
-    'g':'lime','r':'darkorange','i':'deeppink'}
+    'g':'lime','r':'darkorange','i':'deeppink','z': 'purple'}
 
 ## PLOT part ##
 def LCPLOT(dd,val=0):
     d=ascii.read(dd)
     print(dd)
     # plot LC
-    obs=os.path.splitext(dd)[0].split('-')[-2]
-    fil=os.path.splitext(dd)[0].split('-')[-1]
-    plt.errorbar(d['MJD'], d['MAG']+val, yerr=d['MAGERR']/2,
-                fmt=mk[obs],mec=co[fil],ecolor=co[fil],fillstyle='none',
-                label=obs+' '+fil, capsize=2)
+    #obs=os.path.splitext(dd)[0].split('-')[-2]
+    #fil=os.path.splitext(dd)[0].split('-')[-1]
+    obs=d['OBS']
+    fil=d['FILTER']
+    plt.errorbar( d['MJD'], d['MAG']+val, yerr=d['MAGERR'], fmt=mk[obs], mec=co[fil], ecolor=co[fil],fillstyle='none', capsize=2)
     #plot upper limit
     if 'N' in d['DET']:
         idx=np.where((d['DET']=='N') & (d['MJD']<discoverymjd))
@@ -174,10 +197,10 @@ plt.close('all')
 plt.style.use('seaborn-ticks')
 plt.xlabel('MJD')
 plt.ylabel('MAG (AB)')
-plt.title('SN 2018kp LIGHT CURVE')
-plt.xlim(discoverymjd-10,58300)
+plt.title('SN 2017ein LIGHT CURVE')
+plt.xlim(discoverymjd-15,57970)
 plt.ylim(21.5,14)
-plt.vlines(discoverymjd,14,22,linestyle='--',label='DISCOVERY',color='blue')
+plt.vlines(discoverymjd,12,22,linestyle='--',label='DISCOVERY',color='blue')
 
 for dd in ddd:
     if '-B.dat' in dd: LCPLOT(dd,val=1)
@@ -187,6 +210,7 @@ for dd in ddd:
     if '-i.dat' in dd: LCPLOT(dd,val=-1)
     if '-R.dat' in dd: LCPLOT(dd,val=0)
     if '-r.dat' in dd: LCPLOT(dd,val=0)
+    if '-z.dat' in dd: LCPLOT(dd,val=0)
 #plt.legend()
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
@@ -194,34 +218,36 @@ from matplotlib.lines import Line2D
 #                   Line2D([0], [0], marker='o', color='w', label='Scatter',
 #                          markerfacecolor='g', markersize=15),
 #                   Patch(facecolor='orange', edgecolor='r',label='Color Patch')]
-legend_elements = [Patch(facecolor='blue', edgecolor='none',label='B +1'),
-                   Patch(facecolor='green', edgecolor='none',label='V +0.5'),
+legend_elements = [Patch(facecolor='blue', edgecolor='none',label='B'),
+                   Patch(facecolor='green', edgecolor='none',label='V'),
                    Patch(facecolor='orange', edgecolor='none',label='R'),
-                   Patch(facecolor='red', edgecolor='none',label='I -1'),
-                   Patch(facecolor='lime', edgecolor='none',label='g +0.5'),
-                   Patch(facecolor='darkorange', edgecolor='none',label='r'),
-                   Patch(facecolor='deeppink', edgecolor='none',label='i -1'),
+                   #Patch(facecolor='red', edgecolor='none',label='I -1'),
+                   #Patch(facecolor='lime', edgecolor='none',label='g +0.5'),
+                   #Patch(facecolor='darkorange', edgecolor='none',label='r'),
+                   #Patch(facecolor='deeppink', edgecolor='none',label='i -1'),
+                   #Patch(facecolor='purple', edgecolor='none',label='z'),
+
                    Line2D([0], [0], marker='o', color='w', label='LOAO',
                         markerfacecolor='g',mec='k',fillstyle='none', markersize=10),
                    Line2D([0], [0], marker='^', color='w', label='DOAO',
                           markerfacecolor='g', mec='k',fillstyle='none', markersize=10),
-                   Line2D([0], [0], marker='X', color='w', label='SOAO',
-                          markerfacecolor='g', mec='k',fillstyle='none', markersize=10),
-                   Line2D([0], [0], marker='s', color='w', label='30INCH',
-                           markerfacecolor='g', mec='k',fillstyle='none', markersize=10),
+                   #Line2D([0], [0], marker='X', color='w', label='SOAO',
+                   #       markerfacecolor='g', mec='k',fillstyle='none', markersize=10),
+                   #Line2D([0], [0], marker='s', color='w', label='30INCH',
+                   #        markerfacecolor='g', mec='k',fillstyle='none', markersize=10),
                    Line2D([0], [0], marker='P', color='w', label='MAO',
                         markerfacecolor='g', mec='k',fillstyle='none', markersize=10),
                    Line2D([0], [0], marker='p', color='w', label='CCA250',
                         markerfacecolor='g', mec='k',fillstyle='none', markersize=10),
-                   Line2D([0], [0], marker='*', color='w', label='LSGT',
-                        markerfacecolor='g', mec='k',fillstyle='none', markersize=10),
-                   #Line2D([0], [0], linestyle='--', color='blue', label='Discovery')
+                   #Line2D([0], [0], marker='*', color='w', label='LSGT',
+                   #     markerfacecolor='g', mec='k',fillstyle='none', markersize=10),
+                   Line2D([0], [0], linestyle='--', color='blue', label='Discovery'),
                     ]
 # Create the figure
 #fig, ax = plt.subplots()
 #ax.legend(handles=legend_elements, loc='center')
 plt.legend(handles=legend_elements,ncol=2)
-plt.savefig('SN2018kp_LC_final.eps')
+plt.savefig('SN2017gax_LC_final.eps')
 
 #========================================================================
 # color plot

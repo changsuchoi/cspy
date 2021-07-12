@@ -140,27 +140,7 @@ def GetDist(fitcat_name,Rv):
     print('Distance is estimated as {}+/-{} Mpc'.format(round(D, 3), round(DErr,3)))
     return {'DM' : DM, 'DMErr' : DMErr, 'D' : D, 'DErr': DErr}
 
-def CalChiSq(fit, x, y, yerr, N, n_free) :
-    '''
-    fit        : Input array from the fitting. ex. simplePL(t, x, *popt)
-    x, y, yerr : Input data set as array.
-    N          : Total number of data points. ex. len(y)
-    n_free     : The number of parameters that we are fitting.
-                 If the model has no free parameter then dof = N.
-                 If we are fitting a model with n_free free parameters,
-                 we can force the model to exactly agree with n_free data points and dof = N - n_free.
-    '''
-    #if sum(((fit - y)/yerr)**2) > 1.e-03 :
-    if N-n_free <= N :
-        if sum(((fit - y)/yerr)**2) == 0 :
-            print('fit - y = 0, Rejected')
-            RedCSQ = -99
-        else :
-            RedCSQ = (1.0/(N-n_free))*sum(((fit - y)/yerr)**2)
-    else :
-        print('N-n_free <= N, this will be rejected.')
-        RedCSQ = -99
-    return RedCSQ
+
 
 def GetEBVhost(fitcat_name, Rv) :
     """
@@ -192,7 +172,7 @@ def GetEBVhost(fitcat_name, Rv) :
     EBVhostErr    = np.sqrt(BVmaxObsErr**2 + BVmax0Err**2)
     Rv_gal    = Rv; Rv_HV = 1.55 # +/-0.06 (Wang+09)
     Ahost_V   = EBVhost * Rv_gal
-    FilterSet = np.array([4400., 5400, 6500.])#, 8797., 12483.0, 16313.0, 22010.0])
+    FilterSet = np.array([4400., 5400, 6500.]#, 8797., 12483.0, 16313.0, 22010.0])
     Ahost     = extinction.fitzpatrick99(FilterSet, Ahost_V, Rv_gal)
     print('*** Host Galaxy Extinction (Philips+99) Results ***')
     print('E(B-V)host = (Bmax - Vmax)c - (Bmax - Vmax)0')
@@ -231,34 +211,43 @@ def SPL2(t, t0, mag0):
 #===============================================================================
 # single filter, for SN 2018kp, used for 'R' band only
 
-def EarlyFit2Pre(incat_name='hgDcSN2019ein.LCfinal.txt', fitcat_name='SN2019ein-PolyFitRes.dat', FreeN=True) :
+def EarlyFit2Pre(name='SN2017ein',incat_name='SN2017ein_B.txt',TBmax=58000, TBmaxErr=0.2, DM=30., D=0.5 FreeN=True) :
     """
-    Perform preliminary Simple power-law fitting for the case 1 
-    (2nd data < t < 8.3d) to decide the reference t0.
+    Perform preliminary Simple power-law fitting for the case 1 (2nd data < t < 8.3d) to decide the reference t0.
     True : power index n
     False : power index 2
     """
+    incat=ascii.read('SN2017ein_r.dat')
+
+    f=extinction.Fitzpatrick99(2.6)
+    Av=0.884
+    A_lamda=f(np.array([4400,5400,6500,8100]),Av)
+    AR_host = 0.65
+    AR_mw = 0.046
+    incat['MAG']=incat['MAG'] - AR_host - AR_mw
+    incat['UL5']=incat['UL5'] - AR_host - AR_mw
+
+    nodet=incat[incat['DET']=='N']
+    incat0=incat[incat['DET']=='Y']
+
     from scipy.optimize import curve_fit
     case   = 2
     incat  = ascii.read(incat_name)
     # Polynomial or Spline fitting result
-    fitcat = ascii.read(fitcat_name)
+    # fitcat = ascii.read(fitcat_name)
     # TBmax & Distance
-    TBmax  = fitcat['Tmax'][0] ; TBmaxErr =  fitcat['TmaxErr'][0]
-    D_res  = GetDist(fitcat_name,Rv)
-    DM     = D_res['DM']
-    D      = D_res['D']
+    #TBmax  = fitcat['Tmax'][0] ; TBmaxErr =  fitcat['TmaxErr'][0]
+    # D_res  = GetDist(fitcat_name,Rv)
+    #DM     = D_res['DM'] #distance measurement
+    #D      = D_res['D']  # DM error
     # Early data fitting with simple power-law (Free power index)
     bandlist     = ['B', 'V', 'R']
-    bandlist     = ['R']
     colorlist    = ['royalblue', 'seagreen', 'orange']#, 'orangered']
-    colorlist    = ['orange']#, 'orangered']
-
     if FreeN :
-        output_name  = 'SN2019ein-SPLFit2PreResN.dat'
+        output_name  = name+'-SPLFit2PreResN.dat'
         # alpha is not fixed to 2.
     else :
-        output_name  = 'SN2019ein-SPLFit2PreRes2.dat'
+        output_name  = name+'-SPLFit2PreRes2.dat'
         # alpha is fixed to 2.
 
 
@@ -266,12 +255,10 @@ def EarlyFit2Pre(incat_name='hgDcSN2019ein.LCfinal.txt', fitcat_name='SN2019ein-
     f.write('T0 T0Err alpha alphaErr mag0 mag0Err Trise TriseErr\n')
     #for cat, color in zip(catlist, colorlist) :
         # Select early data
-        # earlycat    =  cat[(cat['MJD'] < cat['MJD'][0] + 13) ]
-    earlycat = incat1[incat1['MJD'] < incat1['MJD'][0] + 10]
-
+    earlycat    =  incat0[(incat0[incat0['MJD'] < incat0['MJD'][0] + 10) ]
     # Fitting initial paramters
     if FreeN :
-        p0          = [57975., 2., 19.] # [T0, alpha, m0]
+        p0          = [57898., 2., 19.] # [T0, alpha, m0]
         # Do Fitting
         popt, pcov  = curve_fit(SPL, earlycat['MJD'], earlycat['MAG'], sigma=earlycat['MAGERR'],
                                 p0=p0, absolute_sigma=True, maxfev=10000, check_finite=True)
@@ -287,7 +274,7 @@ def EarlyFit2Pre(incat_name='hgDcSN2019ein.LCfinal.txt', fitcat_name='SN2019ein-
         dt0      = incat['MJD'][0] - t0
         Trise    = TBmax - t0
         TriseErr = np.sqrt(TBmaxErr**2 + t0Err**2)
-        print('!====== Simple Power-law fitting results [{} band] ======!'.format('R'))
+        print('!====== Simple Power-law fitting results [{} band] ======!'.format('B'))
         print('(1) Explosion time t0 = {}+/-{}'.format(round(t0,3), round(t0Err,3)))
         print('(1)-1. {} days before the 1st obs. :'.format(round(dt0, 3)))
         print('(2) Power index \u03B1 = {}+/-{}'.format(round(alpha,3), round(alphaErr,3)))
@@ -295,48 +282,70 @@ def EarlyFit2Pre(incat_name='hgDcSN2019ein.LCfinal.txt', fitcat_name='SN2019ein-
         print('(4) Reduced \u03C7\u00b2 = {}'.format(round(RedChiSq, 3)))
         print('(5) Rise time trise = {}+/-{} days'.format(round(Trise,3), round(TriseErr, 3)))
         f.write('{} {} {} {} {} {} {} {}\n'.format(t0, t0Err, alpha, alphaErr, mag0, mag0Err, Trise, TriseErr))
-        else :
-            p0          = [58603., 19.]
-            # Do Fitting
-            popt, pcov  = curve_fit(SPL2, earlycat['MJD'], earlycat[band], sigma=earlycat[band+'err'], p0=p0, absolute_sigma=True, maxfev=10000, check_finite=True)
-            RedChiSq    = CalChiSq(SPL2(earlycat['MJD'], *popt),  earlycat['MJD'], earlycat[band], earlycat[band+'err'], len(earlycat['MJD']), 1)
-            # Fitting results
-            t0       = popt[0]
-            t0Err    = np.sqrt(np.diag(pcov))[0]
-            mag0     = popt[1]
-            mag0Err  = np.sqrt(np.diag(pcov))[1]
-            dt0      = incat['MJD'][0] - t0
-            Trise    = TBmax - t0
-            TriseErr = np.sqrt(TBmaxErr**2 + t0Ersr**2)
-            print('!====== Simple Power-law fitting results [{} band] ======!'.format(band))
-            print('(1) Explosion time t0 = {}+/-{}'.format(round(t0,3), round(t0Err,3)))
-            print('(1)-1. {} days before the 1st obs. :'.format(round(dt0, 3)))
-            print('(2) Power index \u03B1 = 2 (fixed)')
-            print('(3) mag0 = {}+/-{}'.format(round(mag0,3), round(mag0Err,3)))
-            print('(4) Reduced \u03C7\u00b2 = {}'.format(round(RedChiSq, 3)))
-            print('(5) Rise time trise = {}+/-{} days'.format(round(Trise,3), round(TriseErr, 3)))
-            f.write('{} {} {} {} {} {} {} {}\n'.format(t0, t0Err, 2.0, -99, mag0, mag0Err, Trise, TriseErr))
-        if FreeN :
-            SPLXYcat_name = 'SN2019ein-SPLXY_case2_{}N.dat'.format(band)
-            resicat_name = 'SN2019ein-SPLXY-Residual_case2_{}N.dat'.format(band)
-        else :
-            SPLXYcat_name = 'SN2019ein-SPLXY_case2_{}2.dat'.format(band)
-            resicat_name = 'SN2019ein-SPLXY-Residual_case2_{}2.dat'.format(band)
-        # Fitting lines & Residuals
-        x = np.linspace(t0, np.max(earlycat['MJD']), num = len(earlycat['MJD']))
-        y = SPL(x, *popt)
-        xytbl  = Table({'x' : x, 'y' : y}, names=['x', 'y'])
-        ascii.write(xytbl, output=SPLXYcat_name, overwrite=True)
-        # Residuals earlycat[band]
-        residual = earlycat[band] - SPL(earlycat['MJD'], *popt)
-        resitbl  = Table({'OBS' : earlycat['OBS'], 'xr' : earlycat['MJD'], 'yr' : residual, 'yrerr' : earlycat[band+'err']}, names=['OBS', 'xr', 'yr', 'yrerr'])
-        ascii.write(resitbl, output=resicat_name, overwrite=True)
+    else :
+        p0          = [57898., 19.]
+        # Do Fitting
+        popt, pcov  = curve_fit(SPL2, earlycat['MJD'], earlycat[band], sigma=earlycat[band+'err'], p0=p0, absolute_sigma=True, maxfev=10000, check_finite=True)
+        RedChiSq    = CalChiSq(SPL2(earlycat['MJD'], *popt),  earlycat['MJD'], earlycat[band], earlycat[band+'err'], len(earlycat['MJD']), 1)
+        # Fitting results
+        t0       = popt[0]
+        t0Err    = np.sqrt(np.diag(pcov))[0]
+        mag0     = popt[1]
+        mag0Err  = np.sqrt(np.diag(pcov))[1]
+        dt0      = incat['MJD'][0] - t0
+        Trise    = TBmax - t0
+        TriseErr = np.sqrt(TBmaxErr**2 + t0Ersr**2)
+        print('!====== Simple Power-law fitting results [{} band] ======!'.format(band))
+        print('(1) Explosion time t0 = {}+/-{}'.format(round(t0,3), round(t0Err,3)))
+        print('(1)-1. {} days before the 1st obs. :'.format(round(dt0, 3)))
+        print('(2) Power index \u03B1 = 2 (fixed)')
+        print('(3) mag0 = {}+/-{}'.format(round(mag0,3), round(mag0Err,3)))
+        print('(4) Reduced \u03C7\u00b2 = {}'.format(round(RedChiSq, 3)))
+        print('(5) Rise time trise = {}+/-{} days'.format(round(Trise,3), round(TriseErr, 3)))
+        f.write('{} {} {} {} {} {} {} {}\n'.format(t0, t0Err, 2.0, -99, mag0, mag0Err, Trise, TriseErr))
+    if FreeN :
+        SPLXYcat_name = name+'-SPLXY_case2_{}N.dat'.format(band)
+        resicat_name = name+'-SPLXY-Residual_case2_{}N.dat'.format(band)
+    else :
+        SPLXYcat_name = name+'-SPLXY_case2_{}2.dat'.format(band)
+        resicat_name = name+'-SPLXY-Residual_case2_{}2.dat'.format(band)
+    # Fitting lines & Residuals
+    x = np.linspace(t0, np.max(earlycat['MJD']), num = len(earlycat['MJD']))
+    y = SPL(x, *popt)
+    xytbl  = Table({'x' : x, 'y' : y}, names=['x', 'y'])
+    ascii.write(xytbl, output=SPLXYcat_name, overwrite=True)
+    # Residuals earlycat[band]
+    residual = earlycat[band] - SPL(earlycat['MJD'], *popt)
+    resitbl  = Table({'OBS' : earlycat['OBS'], 'xr' : earlycat['MJD'], 'yr' : residual, 'yrerr' : earlycat[band+'ERR']}, names=['OBS', 'xr', 'yr', 'yrerr'])
+    ascii.write(resitbl, output=resicat_name, overwrite=True)
     f.close()
 
 
 
 
 #===============================================================================
+def CalChiSq(fit, x, y, yerr, N, n_free) :
+    '''
+    fit        : Input array from the fitting. ex. simplePL(t, x, *popt)
+    x, y, yerr : Input data set as array.
+    N          : Total number of data points. ex. len(y)
+    n_free     : The number of parameters that we are fitting.
+                 If the model has no free parameter then dof = N.
+                 If we are fitting a model with n_free free parameters,
+                 we can force the model to exactly agree with n_free data points and dof = N - n_free.
+    '''
+    #if sum(((fit - y)/yerr)**2) > 1.e-03 :
+    if N-n_free <= N :
+        if sum(((fit - y)/yerr)**2) == 0 :
+            print('fit - y = 0, Rejected')
+            RedCSQ = -99
+        else :
+            RedCSQ = (1.0/(N-n_free))*sum(((fit - y)/yerr)**2)
+    else :
+        print('N-n_free <= N, this will be rejected.')
+        RedCSQ = -99
+    return RedCSQ
+
 def single_powerlaw(t, t0, a, mg0):
     """
     t   :
@@ -357,7 +366,7 @@ def fit_single(t, mg, mge, initial, maxfev):
     """
     from scipy.optimize import curve_fit
     popt, pcov = curve_fit(single_powerlaw, t, mg, sigma=mge,  p0=initial, absolute_sigma=True, maxfev=maxfev, check_finite=True)
-    return popt,pcov
+
 def planck(wave, temp):
     import numpy as np
     #if len(wave) > 1 :
@@ -682,7 +691,7 @@ def MAG_Kasen(td, rstar, band):
     Mc  = 1.0/1.4
     dm  = np.log10(Msun) + 2. * np.log10(2.9979e10) - 51. # Difference btw E51 and Msun*c^2
 '''
-
+###################################################################################
 
 
 def lcearly(rstar, band, fig=True):
@@ -730,108 +739,178 @@ def lcearly(rstar, band, fig=True):
 
 #===============================================================================
 
-from scipy.optimize import curve_fit
-case   = 2
-incat  = ascii.read(incat_name)
-# Polynomial or Spline fitting result
-fitcat = ascii.read(fitcat_name)
-# TBmax & Distance
-TBmax  = fitcat['Tmax'][0] ; TBmaxErr =  fitcat['TmaxErr'][0]
-D_res  = GetDist(fitcat_name, Rv)
-DM     = D_res['DM']
-D      = D_res['D']
-# Early data fitting with simple power-law (Free power index)
-bandlist     = ['B', 'V', 'R']
-bandlist     = ['R']
-colorlist    = ['royalblue', 'seagreen', 'orange']#, 'orangered']
-colorlist    = ['orange']#, 'orangered']
+#===============================================================================
+# single filter, for SN 2018kp, used for 'R' band only
 
-if FreeN :
-    output_name  = 'SN2018kp-SPLFit2PreResN.dat'
-    # alpha is not fixed to 2.
-else :
-    output_name  = 'SN2018kp-SPLFit2PreRes2.dat'
-    # alpha is fixed to 2.
+def EarlyFit2Pre(name='SN2017ein',incat_name='SN2017ein_B.txt',
+                TBmax=58000, TBmaxErr=0.2, DM=30., D=0.5 FreeN=True) :
+    """
+    Perform preliminary Simple power-law fitting for the case 1 (2nd data < t < 8.3d) to decide the reference t0.
+    True : power index n
+    False : power index 2
+    """
+    from scipy.optimize import curve_fit
+    case   = 2
+    incat  = ascii.read(incat_name)
+    f=extinction.Fitzpatrick99(1.7)
+    Av=1.06
+    A_lamda=f(np.array([4400,5400,6500,8100]),Av)
+    AR_host = 0.67
+    AR_mw = 0.062
+    incat['MAG']=incat['MAG'] - AR_host - AR_mw
+    incat['UL5']=incat['UL5'] - AR_host - AR_mw
+    band='R'
+
+    nodet=incat[incat['DET']=='N']
+    incat0=incat[incat['DET']=='Y']
+    # Polynomial or Spline fitting result
+    # fitcat = ascii.read(fitcat_name)
+    # TBmax & Distance
+    #TBmax  = fitcat['Tmax'][0] ; TBmaxErr =  fitcat['TmaxErr'][0]
+    # D_res  = GetDist(fitcat_name,Rv)
+    #DM     = D_res['DM'] #distance measurement
+    #D      = D_res['D']  # DM error
+    # Early data fitting with simple power-law (Free power index)
+    bandlist     = ['B', 'V', 'R']
+    colorlist    = ['royalblue', 'seagreen', 'orange']#, 'orangered']
+    if FreeN :
+        output_name  = name+'-SPLFit2PreResN.dat'
+        # alpha is not fixed to 2.
+    else :
+        output_name  = name+'-SPLFit2PreRes2.dat'
+        # alpha is fixed to 2.
 
 
-f = open(output_name, 'w+')
-f.write('T0 T0Err alpha alphaErr mag0 mag0Err Trise TriseErr\n')
-#for cat, color in zip(catlist, colorlist) :
-    # Select early data
-    # earlycat    =  cat[(cat['MJD'] < cat['MJD'][0] + 13) ]
-earlycat = incat1[incat1['MJD'] < incat1['MJD'][0] + 12]
+    f = open(output_name, 'w+')
+    f.write('T0 T0Err alpha alphaErr mag0 mag0Err Trise TriseErr\n')
+    #for cat, color in zip(catlist, colorlist) :
+        # Select early data
+    earlycat0    =  incat1[(incat1['MJD'] < incat1['MJD'][0] + 12) ]
+    earlycat0    =  incat1[(incat1['MJD'] < incat1['MJD'][0] + 12) ]
+    earlycat0    =  incat1[(incat1['MJD'] < 58153) ]
+    earlycat     =  incat1[(incat1['MJD'] < 58154) ]
+    #earlycat    =  earlycat0[:15]
+    del earlycat[:2]
+    # Fitting initial paramters
+        #else : alpha= 2 set
+        p0          = [57898., 19.]
+        # Do Fitting
+        popt2, pcov2  = curve_fit(SPL2, earlycat['MJD'], earlycat['MAG'], sigma=earlycat['MAGERR'],
+                                p0=p0, absolute_sigma=True, maxfev=10000, check_finite=True)
+        RedChiSq    = CalChiSq(SPL2(earlycat['MJD'], *popt2),  earlycat['MJD'], 
+                                earlycat['MAG'], earlycat['MAGERR'], len(earlycat['MJD']), 1)
+        # Fitting results
+        t0       = popt2[0]
+        t0Err    = np.sqrt(np.diag(pcov2))[0]
+        mag0     = popt2[1]
+        mag0Err  = np.sqrt(np.diag(pcov2))[1]
+        dt0      = incat['MJD'][0] - t0
+        Trise    = TBmax - t0
+        TriseErr = np.sqrt(TBmaxErr**2 + t0Err**2)
+        print('!====== Simple Power-law fitting results [{} band] ======!'.format(band))
+        print('(1) Explosion time t0 = {}+/-{}'.format(round(t0,3), round(t0Err,3)))
+        print('(1)-1. {} days before the 1st obs. :'.format(round(dt0, 3)))
+        print('(2) Power index \u03B1 = 2 (fixed)')
+        print('(3) mag0 = {}+/-{}'.format(round(mag0,3), round(mag0Err,3)))
+        print('(4) Reduced \u03C7\u00b2 = {}'.format(round(RedChiSq, 3)))
+        print('(5) Rise time trise = {}+/-{} days'.format(round(Trise,3), round(TriseErr, 3)))
+        #f.write('{} {} {} {} {} {} {} {}\n'.format(t0, t0Err, 2.0, -99, mag0, mag0Err, Trise, TriseErr))
+    #if FreeN :
+        p0          = [57898., 2., 19.] # [T0, alpha, m0]
+        # Do Fitting
+        popt, pcov  = curve_fit(SPL, earlycat['MJD'], earlycat['MAG'], sigma=earlycat['MAGERR'],
+                                p0=p0, absolute_sigma=True, maxfev=10000, check_finite=True)
+        RedChiSq    = CalChiSq(SPL(earlycat['MJD'], *popt),  earlycat['MJD'],
+                                earlycat['MAG'], earlycat['MAGERR'], len(earlycat['MJD']), 2)
+        # Fitting results
+        t0       = popt[0]
+        t0Err    = np.sqrt(np.diag(pcov))[0]
+        alpha    = popt[1]
+        alphaErr = np.sqrt(np.diag(pcov))[1]
+        mag0     = popt[2]
+        mag0Err  = np.sqrt(np.diag(pcov))[2]
+        dt0      = incat['MJD'][0] - t0
+        Trise    = TBmax - t0
+        TriseErr = np.sqrt(TBmaxErr**2 + t0Err**2)
+        print('!====== Simple Power-law fitting results [{} band] ======!'.format('B'))
+        print('(1) Explosion time t0 = {}+/-{}'.format(round(t0,3), round(t0Err,3)))
+        print('(1)-1. {} days before the 1st obs. :'.format(round(dt0, 3)))
+        print('(2) Power index \u03B1 = {}+/-{}'.format(round(alpha,3), round(alphaErr,3)))
+        print('(3) mag0 = {}+/-{}'.format(round(mag0,3), round(mag0Err,3)))
+        print('(4) Reduced \u03C7\u00b2 = {}'.format(round(RedChiSq, 3)))
+        print('(5) Rise time trise = {}+/-{} days'.format(round(Trise,3), round(TriseErr, 3)))
+        #f.write('{} {} {} {} {} {} {} {}\n'.format(t0, t0Err, alpha, alphaErr, mag0, mag0Err, Trise, TriseErr))
 
-# Fitting initial paramters
-if FreeN :
-    p0          = [57975., 2., 19.] # [T0, alpha, m0]
-    # Do Fitting
-    popt, pcov  = curve_fit(SPL, earlycat['MJD'], earlycat['MAG'], sigma=earlycat['MAGERR'],
-                            p0=p0, absolute_sigma=True, maxfev=10000, check_finite=True)
-    RedChiSq    = CalChiSq(SPL(earlycat['MJD'], *popt),  earlycat['MJD'],
-                            earlycat['MAG'], earlycat['MAGERR'], len(earlycat['MJD']), 2)
-    # Fitting results
-    t0       = popt[0]
-    t0Err    = np.sqrt(np.diag(pcov))[0]
-    alpha    = popt[1]
-    alphaErr = np.sqrt(np.diag(pcov))[1]
-    mag0     = popt[2]
-    mag0Err  = np.sqrt(np.diag(pcov))[2]
-    dt0      = incat1['MJD'][0] - t0
-    Trise    = TBmax - t0
-    TriseErr = np.sqrt(TBmaxErr**2 + t0Err**2)
-    print('!====== Simple Power-law fitting results [{} band] ======!'.format('r'))
-    print('(1) Explosion time t0 = {}+/-{}'.format(round(t0,3), round(t0Err,3)))
-    print('(1)-1. {} days before the 1st obs. :'.format(round(dt0, 3)))
-    print('(2) Power index \u03B1 = {}+/-{}'.format(round(alpha,3), round(alphaErr,3)))
-    print('(3) mag0 = {}+/-{}'.format(round(mag0,3), round(mag0Err,3)))
-    print('(4) Reduced \u03C7\u00b2 = {}'.format(round(RedChiSq, 3)))
-    print('(5) Rise time trise = {}+/-{} days'.format(round(Trise,3), round(TriseErr, 3)))
-    f.write('{} {} {} {} {} {} {} {}\n'.format(t0, t0Err, alpha, alphaErr, mag0, mag0Err, Trise, TriseErr))
-f.close()
+    if FreeN :
+        SPLXYcat_name = name+'-SPLXY_case2_{}N.dat'.format(band)
+        resicat_name = name+'-SPLXY-Residual_case2_{}N.dat'.format(band)
+    else :
+        SPLXYcat_name = name+'-SPLXY_case2_{}2.dat'.format(band)
+        resicat_name = name+'-SPLXY-Residual_case2_{}2.dat'.format(band)
+
+    # Fitting lines & Residuals
+    x = np.linspace(t0, np.max(earlycat['MJD']), num = len(earlycat['MJD']))
+    y = SPL(x, *popt)
+    xytbl  = Table({'x' : x, 'y' : y}, names=['x', 'y'])
+    ascii.write(xytbl, output=SPLXYcat_name, overwrite=True)
+    # Residuals earlycat[band]
+    residual = earlycat['MAG'] - SPL(earlycat['MJD'], *popt)
+    resitbl  = Table({'OBS' : earlycat['OBS'], 'xr' : earlycat['MJD'], 
+                        'yr' : residual, 'yrerr' : earlycat['MAGERR']}, 
+                        names=['OBS', 'xr', 'yr', 'yrerr'])
+    ascii.write(resitbl, output=resicat_name, overwrite=True)
+    f.close()
+
 
 import matplotlib.pyplot as plt
 plt.ion()
-nodet=ascii.read('non_det.txt')
-plt.errorbar(earlycat['MJD'],earlycat['MAG'],yerr=earlycat['MAGERR']/2,fmt='ro')
-SPL(earlycat['MJD'],*popt)
+#nodet=ascii.read('non_det.txt')
+plt.errorbar(earlycat0['MJD'],earlycat0['MAG'],yerr=earlycat0['MAGERR'],fmt='ro')
+#SPL(earlycat['MJD'],*popt)
 #plt.plot(earlycat['MJD'],SPL(earlycat['MJD'],*popt),'--')
-xrr=np.linspace(57960,57990,300)
-plt.plot(xrr,SPL(xrr,*popt),'-')
-plt.show()
-plt.ylim(20.1,15)
+x=np.linspace(58138,58154,200 )
+
+plt.plot(x,SPL(x,*popt),linestyle='solid',label='alpha = '+str( round(popt[1],2)))
+plt.plot(x,SPL2(x,*popt2),linestyle='solid',label='alpha = 2')
+
+#plt.show()
+plt.ylim(21,15)
 from astropy.time import Time
-t = Time('2017-08-14T17:05:16', format='isot', scale='utc')
-discoverymjd=t.mjd
-discoverymjd
-plt.vlines(discoverymjd,ymin=13,ymax=21,linestyle='dotted')
+#t = Time('2017-05-25T23:16:48', format='isot', scale='utc')
+#discoverymjd=t.mjd
+#discoverymjd
+plt.vlines(discoverymjd,ymin=14,ymax=22, linestyle='dashdot',alpha=0.5)
 plt.errorbar(nodet['MJD'],nodet['UL5'],yerr=0.2,lolims=True,fmt='_')
-plt.xlim(57973,57990)
-plt.ylim(20.5,13)
-plt.title('EARLY LC FIT SN 2017gax r-band')
+plt.xlim(58140,58154)
+plt.ylim(21,15)
+plt.rc('xtick',labelsize=14)
+plt.rc('ytick',labelsize=14)
+
+plt.title('SN 2018kp EARLY LC FIT R-band',fontsize=16)
 
 
 #from lgpy.sn2019ein_fitting import fearly2_kasen
 #from lgpy.sn2019ein_fitting import fearly2_rw10
-#Shock heated cooling emission
-td     = np.array(0.00 + 0.01*np.arange(501), dtype=np.float128)
-y_dict = {}
-Rstar=2.0
-tsep =0.3
-
-print('R* = {} Rsol for {} band'.format(round(Rstar,3), band))
+    # Shock heated cooling emission
+td     = np.array(0.00 + 0.01*np.arange(401), dtype=np.float128)
+#y_dict = {}
+#print('R* = {} Rsol for {} band'.format(round(Rstar[r],3), band))
 # Kasen
+
+band='R'
+Rstar=5
+delay=0
 y      = []
 for i in range(len(td)):
     y_dum = fearly2_kasen(td[i], Rstar, band)
     y.append(y_dum)
-y_dict.update({Rstar : y})
-
-#plt.plot(td+t0+0.5,y_dict[Rstar]+DM,linestyle='--')
-plt.plot(td+t0+tsep,np.array(y)+DM,linestyle='--')
+#y_dict.update({Rstar : y})
+plt.plot(td+t0+delay, np.array(y)+DM , linestyle='dashdot',label='RW '+str(Rstar)+' R ,'+str(delay)+' d')
 # RW10
 y_rw10 = []
 for i in range(len(td)) :
     y_rw10_dum = fearly2_rw10(td[i], Rstar, band)
     y_rw10.append(y_rw10_dum)
-#plt.plot(td+t0+0.3,y_dict[Rstar]+DM,linestyle='-')
-plt.plot(td+t0+tsep,np.array(y_rw10)+DM,linestyle='dotted')
+plt.plot(td+t0+delay, np.array(y_rw10)+DM ,linestyle='dotted',label='Kasen '+str(Rstar)+' R ,'+str(delay)+' d')
+
+plt.legend(loc='lower right')

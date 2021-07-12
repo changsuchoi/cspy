@@ -129,7 +129,7 @@ band5= ['Bi','Vi','Ri','Ii','WFCAMJ', 'WFCAMH', 'WFCAMK']
 band6= ['WFCAMJ', 'WFCAMH', 'WFCAMK']
 ​band7=['Bs','Vs','Rs']
 bands=['Bs','Vs','Rs']
-ss.fit( mangle=True, kcorr=True, k_stretch=True)
+ss.fit( mangle=1, kcorr=0, k_stretch=0)
 ss.fit(band)
 s.getEBVgal()
 print("MW extinction (E(B-V)_MW) =", s.EBVgal)
